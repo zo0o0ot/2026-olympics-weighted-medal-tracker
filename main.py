@@ -35,7 +35,10 @@ def scrape_medal_data():
     Returns a dictionary: { 'Country Name': {'Gold': X, 'Silver': Y, 'Bronze': Z}, ... }
     """
     print(f"Scraping {WIKIPEDIA_URL}...")
-    response = requests.get(WIKIPEDIA_URL)
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+    response = requests.get(WIKIPEDIA_URL, headers=headers)
     response.raise_for_status()
     soup = BeautifulSoup(response.content, 'html.parser')
     
