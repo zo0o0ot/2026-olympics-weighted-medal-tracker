@@ -56,7 +56,7 @@ def scrape_medal_counts():
             country_text = get_text(country_col_idx)
             
             # Remove (USA) suffix if widely used
-            country_name = country_text.split('(')[0].strip()
+            country_name = country_text.split('(')[0].replace('*', '').strip()
             
             # Numbers are usually last 4 columns: G, S, B, Total
             bronze = int(cols[-2].get_text(strip=True))
