@@ -163,9 +163,9 @@ def update_sheet(client, scraped_data):
             
         # Prepare Update
         # gspread uses (row, col)
-        updates.append({'range': f"{results_worksheet.title}!{gspread.utils.rowcol_to_a1(i, col_gold+1)}", 'values': [[match['Gold']]]})
-        updates.append({'range': f"{results_worksheet.title}!{gspread.utils.rowcol_to_a1(i, col_silver+1)}", 'values': [[match['Silver']]]})
-        updates.append({'range': f"{results_worksheet.title}!{gspread.utils.rowcol_to_a1(i, col_bronze+1)}", 'values': [[match['Bronze']]]})
+        updates.append({'range': f"{gspread.utils.rowcol_to_a1(i, col_gold+1)}", 'values': [[match['Gold']]]})
+        updates.append({'range': f"{gspread.utils.rowcol_to_a1(i, col_silver+1)}", 'values': [[match['Silver']]]})
+        updates.append({'range': f"{gspread.utils.rowcol_to_a1(i, col_bronze+1)}", 'values': [[match['Bronze']]]})
 
     if updates:
         print(f"Pushing {len(updates)} cell updates to Google Sheets...")
