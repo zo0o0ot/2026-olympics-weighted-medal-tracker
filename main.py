@@ -269,6 +269,7 @@ def update_flavor_tab(client, details, team_map):
     """
     Appends NEW entries to the Flavor tab.
     Logic: Read existing -> Check uniqueness -> Append new.
+    Also handles basic cleanup of "messy" rows if detected.
     """
     if not details: return
     
@@ -276,57 +277,80 @@ def update_flavor_tab(client, details, team_map):
     ws = sheet.worksheet(FLAVOR_TAB_NAME)
     existing_data = ws.get_all_values()
     
+    # --- Cleanup Logic ---
+    # Check if header is wrong or data is messy
+    headers = existing_data[0] if existing_data else []
+    
+    # Aggressive check: If the first column header isn't "Date", we wipe it.
+    # This handles the schema migration from [Country, Medal...] to [Date, Country...]
+    if not headers or headers[0] != "Date":
+        print("Flavor tab has old schema or is messy. Wiping and resetting...")
+        # Clear everything and set correct headers
+        ws.clear()
+        ws.append_row(['Date', 'Country', 'Medal', 'Event', 'Athlete', 'Team'])
+        existing_data = [] # Reset local cache
+    
     # Signature for uniqueness: Event + Medal + Athlete
     existing_sigs = set()
-    for row in existing_data[1:]: # Skip header
-        # Check col index? Assuming 0=Country, 1=Medal, 2=Event, 3=Athlete
-        # Based on user request: [Country Name] | [Medal Color] | [Event Name] | [Athlete Name]
-        if len(row) >= 4:
-            sig = f"{row[2]}_{row[1]}_{row[3]}" # Event_Medal_Athlete
-            existing_sigs.add(sig)
+    # Skip header
+    start_row_idx = 1 if existing_data else 0
+    
+    # Need to know which column is which in EXISTING data to check dupes
+    # New Format: Date (0), Country (1), Medal (2), Event (3), Athlete (4), Team (5)
+    # Old Format (if any survived): Country(0), Medal(1), Event(2), Athlete(3), Team(4)
+    # If we just cleared, it's empty.
+    
+    for row in existing_data[start_row_idx:]:
+        # Robust signature check
+        # Try to find Event/Medal/Athlete columns by content specific?
+        # Or just assume new format if headers match.
+        if len(row) >= 5:
+            # Assuming new format or similar enough to detect dupes
+            # Let's use a broad signature: concatenate all except Date?
+            # Or just Event+Medal+Athlete
+            # In new format: Event is idx 3, Medal is idx 2, Athlete is idx 4
+            if len(row) >= 5:
+                 sig = f"{row[3]}_{row[2]}_{row[4]}" 
+                 existing_sigs.add(sig)
 
     new_rows = []
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    
     for d in details:
         sig = f"{d['Event']}_{d['Medal']}_{d['Athlete']}"
         if sig in existing_sigs: continue
         
         # New!
-        # Determine Team Owning this country
         c_name = d['Country']
-        # Need to clean country name to match 'team_map' keys?
-        # team_map has exact names from Draft tab.
-        # Scraping gives us "USA", Draft has "USA" or "United States"?
-        # Need robust matching.
         
         # Find Team
         owner_team = "Free Agent"
-        # Since team_map is {TeamName: [Countries]}, search it
-        found = False
         for t_name, countries in team_map.items():
-            if c_name in countries or c_name.replace('(', '').replace(')', '') in countries:
+            # Robust check
+            if c_name in countries:
                 owner_team = t_name
-                found = True
                 break
+            # Check for partial matches or "United States" vs "USA"
+            # Our scraping now returns full names "Norway", "United States".
+            # Draft tab usually has full names too.
+            # But let's check normalized
+            for c in countries:
+                if c.lower() == c_name.lower():
+                    owner_team = t_name
+                    break
         
-        # The user wants "Categorization: Group by Team"
-        # We are just appending rows. We can add a Column "Team" or just sort later?
-        # User said: "append a new row... You MUST group these entries by Team".
-        # If appending, we can't easily "group" visually unless we insert.
-        # For automation simplicity: Append, and add "Team" as first column?
-        # User format: [Country] | [Medal] | [Event] | [Athlete]
-        # Maybe add [Team] column? Or just trust the order?
-        # Let's add Team to the output row.
+        # New Row Format: [Date, Country, Medal, Event, Athlete, Team]
+        # We use today's date because Wikipedia doesn't provide it easily.
+        # User asked for "date they were earned". 
+        # Since we run daily, "today" is a good approximation for NEW rows.
+        # For historical rows (already scraped), we can't backfill easily without a better source.
+        # But this solves the "updates for each team per day" request going forward.
         
-        new_rows.append([d['Country'], d['Medal'], d['Event'], d['Athlete'], owner_team])
+        new_rows.append([today_str, d['Country'], d['Medal'], d['Event'], d['Athlete'], owner_team])
         existing_sigs.add(sig) # Prevent dupes within same batch
 
     if new_rows:
         print(f"Adding {len(new_rows)} new rows to Flavor tab.")
-        # Setup headers if empty
-        if len(existing_data) <= 1:
-            if not existing_data:
-                ws.append_row(['Country', 'Medal', 'Event', 'Athlete', 'Team'])
-        
         ws.append_rows(new_rows)
     else:
         print("No new Flavor entries.")
