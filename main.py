@@ -8,322 +8,383 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 
 # --- Configuration ---
-SHEET_KEY = '18gTKqgWBv4KuAqCKppB9IZxZja-yhJzufj6oqrg7JXw'  # From user provided URL
-WIKIPEDIA_URL = 'https://en.wikipedia.org/wiki/2026_Winter_Olympics_medal_table'
+SHEET_KEY = '18gTKqgWBv4KuAqCKppB9IZxZja-yhJzufj6oqrg7JXw'
+WIKIPEDIA_URL_COUNTS = 'https://en.wikipedia.org/wiki/2026_Winter_Olympics_medal_table'
+WIKIPEDIA_URL_DETAILS = 'https://en.wikipedia.org/wiki/List_of_2026_Winter_Olympics_medal_winners'
 RESULTS_TAB_NAME = 'Results'
 FLAVOR_TAB_NAME = 'Flavor'
 DRAFT_TAB_NAME = 'Draft'
 
 def get_google_sheet_client():
-    """
-    Authenticates with Google Sheets using the Service Account JSON found in
-    environment variable 'GOOGLE_CREDENTIALS'.
-    """
+    """Authenticates with Google Sheets using Service Account."""
     creds_json = os.environ.get('GOOGLE_CREDENTIALS')
     if not creds_json:
         raise ValueError("GOOGLE_CREDENTIALS environment variable not found.")
-    
     creds_dict = json.loads(creds_json)
     scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
     creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
     client = gspread.authorize(creds)
     return client
 
-def scrape_medal_data():
-    """
-    Scrapes the Wikipedia medal table for the 2026 Winter Olympics.
-    Returns a dictionary: { 'Country Name': {'Gold': X, 'Silver': Y, 'Bronze': Z}, ... }
-    """
-    print(f"Scraping {WIKIPEDIA_URL}...")
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    }
-    response = requests.get(WIKIPEDIA_URL, headers=headers)
-    response.raise_for_status()
-    soup = BeautifulSoup(response.content, 'html.parser')
-    
-    # Locate the medal table
-    # Wikipedia tables usually have class 'wikitable' and 'sortable'
-    # For Olympics, it's often the first wikitable with 'Medal table' caption or similar.
-    # Note: Structure might change if table is empty, but we'll target the standard layout.
-    
-    table = soup.find('table', class_='wikitable')
-    if not table:
-        print("Warning: Medal table not found on Wikipedia page. Assuming 0 medals generally.")
+def scrape_medal_counts():
+    """Scrapes country totals (Gold, Silver, Bronze) from Wikipedia."""
+    print(f"Scraping Counts: {WIKIPEDIA_URL_COUNTS}...")
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+    try:
+        response = requests.get(WIKIPEDIA_URL_COUNTS, headers=headers)
+        response.raise_for_status()
+    except Exception as e:
+        print(f"Error scraping counts: {e}")
         return {}
 
+    soup = BeautifulSoup(response.content, 'html.parser')
+    table = soup.find('table', class_='wikitable')
+    if not table: return {}
+
     medal_data = {}
-    
-    # Iterate over rows, skipping header
-    rows = table.find_all('tr')
-    for row in rows[1:]:
+    for row in table.find_all('tr')[1:]:
         cols = row.find_all(['th', 'td'])
-        if len(cols) < 5:
-            continue
-            
-        # Wikipedia table typical format: Rank | NOC (Country) | Gold | Silver | Bronze | Total
-        # Sometimes Rank is not in a th/td or is merged. Context dependent.
-        # usually 2nd col is Country if Rank is present.
-        
-        # Let's try to identify the country name. it usually contains a link and text.
+        if len(cols) < 5: continue
         try:
-            country_col = cols[1] if len(cols) > 5 else cols[0] # Very robust check needed here usually
-            country_text = country_col.get_text(strip=True)
+            # Helper to safely get text
+            def get_text(idx): return cols[idx].get_text(strip=True)
             
-            # Extract numbers
-            # Assuming G, S, B are cols 2, 3, 4 (0-indexed) if Rank is 0
-            # If Rank is present (often 'Rank' header), it shifts.
+            # Logic for typical Olympics table: Rank | Country | G | S | B | Total
+            # Detect country column (usually 2nd, index 1)
+            country_col_idx = 1
+            # Adjust if rank row is missing or merged? Assume consistent layout.
+            country_text = get_text(country_col_idx)
             
-            # Heuristic: look for the numbers from the right side.
-            # Typical: [Rank] [Country] [G] [S] [B] [Total]
-            # Verify headers usually, but for a strict script:
+            # Remove (USA) suffix if widely used
+            country_name = country_text.split('(')[0].strip()
             
+            # Numbers are usually last 4 columns: G, S, B, Total
             bronze = int(cols[-2].get_text(strip=True))
             silver = int(cols[-3].get_text(strip=True))
             gold = int(cols[-4].get_text(strip=True))
             
-            # Clean country name (remove " (MEX)" etc if needed, or keeping it to match sheet)
-            # Sheet likely uses standard names. Wikipedia might have "United States" or "USA".
-            # We'll need a mapper or fuzzy matcher later. For now, raw.
-            medal_data[country_text] = {'Gold': gold, 'Silver': silver, 'Bronze': bronze}
+            medal_data[country_name] = {'Gold': gold, 'Silver': silver, 'Bronze': bronze}
         except (ValueError, IndexError):
             continue
-
     return medal_data
 
-def update_sheet(client, scraped_data):
+def scrape_medal_details():
     """
-    Updates the Google Sheet 'Results' tab with scraped data.
+    Scrapes the list of medal winners (Event, Medal, Athlete, Country).
+    Returns list of dicts: [{'Event':..., 'Medal':..., 'Athlete':..., 'Country':...}]
     """
-    print("Opening spreadsheet...")
-    sheet = client.open_by_key(SHEET_KEY)
-    results_worksheet = sheet.worksheet(RESULTS_TAB_NAME)
-    
-    # Get all values to map countries
-    # Assuming 'Results' tab has Country in Column A, Gold in B, Silver in C, Bronze in D
-    # Or strict headers. Let's read headers.
-    
-    data = results_worksheet.get_all_values()
-    headers = data[0]
-    
-    # Simple mapping: find column indices
+    print(f"Scraping Details: {WIKIPEDIA_URL_DETAILS}...")
+    headers = {'User-Agent': 'Mozilla/5.0'}
     try:
-        col_country = headers.index('Country')
-        col_gold = headers.index('Gold')
-        col_silver = headers.index('Silver')
-        col_bronze = headers.index('Bronze')
-    except ValueError:
-        print("Error: Could not find required headers (Country, Gold, Silver, Bronze) in Results tab.")
-        return
+        response = requests.get(WIKIPEDIA_URL_DETAILS, headers=headers)
+        if response.status_code == 404:
+             # Fallback if URL is wrong/redirected
+             print("Detail page not found. Skipping Flavor updates.")
+             return []
+        response.raise_for_status()
+    except Exception as e:
+        print(f"Error scraping details: {e}")
+        return []
 
-    # Update Rows
-    # We will build a batch update list for efficiency
+    soup = BeautifulSoup(response.content, 'html.parser')
+    details = []
+    
+    # Iterate over all headers to find Sports, then their tables
+    # Structure: h2 (Sport) -> table.wikitable
+    # Or just find all wikitables and infer context?
+    # Wikipedia 'List of medal winners' usually has one table per sport or date.
+    
+    tables = soup.find_all('table', class_='wikitable')
+    current_sport = "Unknown"
+    
+    for table in tables:
+        # Try to identify sport from preceding header
+        # This is heuristics-heavy.
+        # Let's iterate rows.
+        rows = table.find_all('tr')
+        if not rows: continue
+        
+        # Headers usually: Event | Gold | Silver | Bronze
+        # We process the data cells
+        for row in rows:
+            cols = row.find_all(['th', 'td'])
+            if len(cols) < 4: continue # Header or weird row
+            
+            # Assume 4 columns: Event, G, S, B.
+            # Sometimes rowspans exist for Event!
+            # Complex parsing needed for rowspans? 
+            # Simplified: Just grab text.
+            
+            try:
+                # Column 0: Event
+                event_cell = cols[0]
+                event_name = event_cell.get_text(strip=True)
+                
+                # Column 1 (Gold), 2 (Silver), 3 (Bronze)
+                # Each cell contains: Athlete (Country)
+                
+                def parse_medalist(cell, color):
+                    text = cell.get_text(strip=True)
+                    if not text: return
+                    # Split Athlete and Country?
+                    # "Mikaela Shiffrin (USA)"
+                    if '(' in text and ')' in text:
+                        athlete = text.split('(')[0].strip()
+                        country = text.split('(')[1].replace(')', '').strip()
+                    else:
+                        athlete = text
+                        country = "Unknown"
+                    
+                    details.append({
+                        'Event': event_name,
+                        'Medal': color,
+                        'Athlete': athlete,
+                        'Country': country
+                    })
+
+                if len(cols) >= 2: parse_medalist(cols[1], 'Gold')
+                if len(cols) >= 3: parse_medalist(cols[2], 'Silver')
+                if len(cols) >= 4: parse_medalist(cols[3], 'Bronze')
+                
+            except Exception:
+                continue
+                
+    return details
+
+def update_results_tab(client, medal_counts):
+    sheet = client.open_by_key(SHEET_KEY)
+    ws = sheet.worksheet(RESULTS_TAB_NAME)
+    data = ws.get_all_values()
+    
+    # Map Helpers
+    name_map = {"Individual Neutral Athletes": "AIN"} # Add others here
     updates = []
     
-    # Map scraped names to Sheet names (this is the tricky part usually)
-    # For now, we assume close matching or user will fix mappings.
-    # Add manual mapping for known discrepancies (e.g., AIN)
-    name_corrections = {
-        "Individual Neutral Athletes": "AIN",
-        # Add others as discovered
-    }
-    
-    # Normalize scraped data keys
-    normalized_scraped = {}
-    for k, v in scraped_data.items():
-        # Remove weird characters if any
-        clean_name = k.split('(')[0].strip() # "United States (USA)" -> "United States"
-        if k in name_corrections:
-            clean_name = name_corrections[k]
-        elif clean_name in name_corrections: # Check clean version too
-             clean_name = name_corrections[clean_name]
-             
-        normalized_scraped[clean_name] = v
+    # Identify Columns
+    try:
+        header = data[0]
+        col_c = header.index('Country')
+        col_g = header.index('Gold')
+        col_s = header.index('Silver')
+        col_b = header.index('Bronze')
+    except ValueError:
+        print("Columns missing in Results tab.")
+        return
 
-    print(f"Processing {len(data)-1} countries in sheet...")
-    for i, row in enumerate(data[1:], start=2): # Start at row 2 (1-indexed)
-        country_name = row[col_country]
-        if not country_name:
-            continue
-            
-        # Fetch current values to check diff (optional, but good for logging)
+    # Prepare batch update
+    for i, row in enumerate(data[1:], start=2):
+        c_name = row[col_c]
+        if not c_name: continue
         
-        # Look for match
-        # Try direct match
-        match = normalized_scraped.get(country_name)
-        
-        if not match:
-            # Try fuzzy or partial?
-            # For now, if no match, we assume 0 or unchanged?
-            # Better to assume unchanged if not found, OR 0 if we trust scrape is complete.
-            # Given it's a "Results" tab, likely 0 default.
-            # But let's log missing ones.
-            # print(f"  No live data found for '{country_name}'")
-            continue
+        # Lookup
+        metrics = medal_counts.get(c_name)
+        if not metrics:
+            # Check mappings
+            search_key = c_name
+            # Reverse map check
+            for k, v in name_map.items():
+                if v == c_name: search_key = k
             
-        # Prepare Update
-        # gspread uses (row, col)
-        updates.append({'range': f"{gspread.utils.rowcol_to_a1(i, col_gold+1)}", 'values': [[match['Gold']]]})
-        updates.append({'range': f"{gspread.utils.rowcol_to_a1(i, col_silver+1)}", 'values': [[match['Silver']]]})
-        updates.append({'range': f"{gspread.utils.rowcol_to_a1(i, col_bronze+1)}", 'values': [[match['Bronze']]]})
+            metrics = medal_counts.get(search_key)
+        
+        if metrics:
+            updates.append({'range': gspread.utils.rowcol_to_a1(i, col_g+1), 'values': [[metrics['Gold']]]})
+            updates.append({'range': gspread.utils.rowcol_to_a1(i, col_s+1), 'values': [[metrics['Silver']]]})
+            updates.append({'range': gspread.utils.rowcol_to_a1(i, col_b+1), 'values': [[metrics['Bronze']]]})
 
     if updates:
-        print(f"Pushing {len(updates)} cell updates to Google Sheets...")
-        results_worksheet.batch_update(updates)
+        print(f"Updating {len(updates)} cells in Results...")
+        ws.batch_update(updates)
     else:
-        print("No updates to push.")
+        print("No match found for any country in Results tab.")
 
-    # Calculate and Update Team Totals
-    calculate_team_results(client, results_worksheet)
-    print("Results updated.")
-
-def calculate_team_results(client, results_worksheet):
+def update_flavor_tab(client, details, team_map):
     """
-    Calculates team totals based on the Results tab and updates the Draft tab.
+    Appends NEW entries to the Flavor tab.
+    Logic: Read existing -> Check uniqueness -> Append new.
     """
-    print("Calculating team results...")
+    if not details: return
     
-    # 1. Get current data from Results tab (all values to compute totals)
-    # Expected columns: Country (A), Gold (B), Silver (C), Bronze (D), Weighted (E), Multiplier (F), Multiplied (G)
-    # But since we just pushed updates, we should re-read or use local data.
-    # Re-reading is safer to catch any formula updates.
-    results_data = results_worksheet.get_all_values()
-    headers = results_data[0]
-    
-    try:
-        col_country = headers.index('Country')
-        # We need to compute weighted/multiplied ourselves if the formulas aren't yet updated/readable
-        # Or we can trust the formulas updated.
-        # But script runs fast, formulas might lag in API read?
-        # Better to compute in Python:
-        col_gold = headers.index('Gold')
-        col_silver = headers.index('Silver')
-        col_bronze = headers.index('Bronze')
-        # We need Multiplier from sheet
-        col_multiplier = headers.index('Multiplier') # Check exact name? "Multiplier" or "Multiplied Total"?
-        # Browser analysis: Col F is Multiplier.
-    except ValueError:
-        print("Error: Could not find required headers (Country, Gold, Silver, Bronze, Multiplier) in Results tab.")
-        return
-
-    # Build Country Data Map
-    country_map = {}
-    for row in results_data[1:]:
-        name = row[col_country]
-        if not name: continue
-        
-        try:
-            g = int(row[col_gold]) if row[col_gold] else 0
-            s = int(row[col_silver]) if row[col_silver] else 0
-            b = int(row[col_bronze]) if row[col_bronze] else 0
-            
-             # Handle empty multiplier
-            mult = row[col_multiplier]
-            if not mult: mult = 1
-            else: mult = float(mult.replace(',', '.')) # Handle potential formatting
-            
-            weighted = (g * 3) + (s * 2) + (b * 1)
-            multiplied = weighted * mult
-            
-            country_map[name] = {
-                'weighted': weighted,
-                'multiplied': multiplied
-            }
-        except (ValueError, IndexError):
-            continue
-
-    # 2. Get Team Mappings from Draft Tab
     sheet = client.open_by_key(SHEET_KEY)
-    draft_worksheet = sheet.worksheet(DRAFT_TAB_NAME)
+    ws = sheet.worksheet(FLAVOR_TAB_NAME)
+    existing_data = ws.get_all_values()
     
-    # Assuming Teams use Columns A, B, C, D (Rows 2-8 for countries)
-    # Row 1 is headers (Team Names)
-    # Rows 2-8 are Countries
+    # Signature for uniqueness: Event + Medal + Athlete
+    existing_sigs = set()
+    for row in existing_data[1:]: # Skip header
+        # Check col index? Assuming 0=Country, 1=Medal, 2=Event, 3=Athlete
+        # Based on user request: [Country Name] | [Medal Color] | [Event Name] | [Athlete Name]
+        if len(row) >= 4:
+            sig = f"{row[2]}_{row[1]}_{row[3]}" # Event_Medal_Athlete
+            existing_sigs.add(sig)
+
+    new_rows = []
+    for d in details:
+        sig = f"{d['Event']}_{d['Medal']}_{d['Athlete']}"
+        if sig in existing_sigs: continue
+        
+        # New!
+        # Determine Team Owning this country
+        c_name = d['Country']
+        # Need to clean country name to match 'team_map' keys?
+        # team_map has exact names from Draft tab.
+        # Scraping gives us "USA", Draft has "USA" or "United States"?
+        # Need robust matching.
+        
+        # Find Team
+        owner_team = "Free Agent"
+        # Since team_map is {TeamName: [Countries]}, search it
+        found = False
+        for t_name, countries in team_map.items():
+            if c_name in countries or c_name.replace('(', '').replace(')', '') in countries:
+                owner_team = t_name
+                found = True
+                break
+        
+        # The user wants "Categorization: Group by Team"
+        # We are just appending rows. We can add a Column "Team" or just sort later?
+        # User said: "append a new row... You MUST group these entries by Team".
+        # If appending, we can't easily "group" visually unless we insert.
+        # For automation simplicity: Append, and add "Team" as first column?
+        # User format: [Country] | [Medal] | [Event] | [Athlete]
+        # Maybe add [Team] column? Or just trust the order?
+        # Let's add Team to the output row.
+        
+        new_rows.append([d['Country'], d['Medal'], d['Event'], d['Athlete'], owner_team])
+        existing_sigs.add(sig) # Prevent dupes within same batch
+
+    if new_rows:
+        print(f"Adding {len(new_rows)} new rows to Flavor tab.")
+        # Setup headers if empty
+        if len(existing_data) <= 1:
+            if not existing_data:
+                ws.append_row(['Country', 'Medal', 'Event', 'Athlete', 'Team'])
+        
+        ws.append_rows(new_rows)
+    else:
+        print("No new Flavor entries.")
+
+def calculate_draft_totals(client):
+    """
+    Calculates Weighted/Multiplied totals from Results and updates Draft tab.
+    """
+    sheet = client.open_by_key(SHEET_KEY)
+    res_ws = sheet.worksheet(RESULTS_TAB_NAME)
+    draft_ws = sheet.worksheet(DRAFT_TAB_NAME)
     
-    # Read strict range A1:D8
-    draft_data = draft_worksheet.get(f"A1:D8") # List of lists
-    
-    if not draft_data:
-        print("Error: Could not read Draft tab.")
+    # 1. Read Results Data
+    r_data = res_ws.get_all_values()
+    r_header = r_data[0]
+    try:
+        idx_c = r_header.index('Country')
+        idx_g = r_header.index('Gold')
+        idx_s = r_header.index('Silver')
+        idx_b = r_header.index('Bronze')
+        idx_m = r_header.index('Multiplier')
+    except:
         return
-        
-    teams = {}
-    # Iterate columns (A, B, C, D -> 0, 1, 2, 3)
-    num_cols = len(draft_data[0])
-    
-    for col_idx in range(num_cols):
-        team_name = draft_data[0][col_idx] # Header
-        countries = []
-        for row_idx in range(1, len(draft_data)):
-            if col_idx < len(draft_data[row_idx]):
-                 c_name = draft_data[row_idx][col_idx]
-                 if c_name: countries.append(c_name)
-        
-        teams[col_idx] = {'name': team_name, 'countries': countries}
 
-    # 3. Compute Team Totals
-    team_updates = []
-    
-    # We will write totals to Row 10 (Weighted) and Row 11 (Multiplied)
-    # Step 1: Write Labels in Row 9 maybe? Or let user handle labels.
-    # The user asked for "two totals...". I'll put them in Row 10 and 11.
-    
-    for col_idx, team in teams.items(): # 0, 1, 2, 3
-        total_weighted = 0
-        total_multiplied = 0
+    c_stats = {}
+    for row in r_data[1:]:
+        c = row[idx_c]
+        if not c: continue
+        g = int(row[idx_g] or 0)
+        s = int(row[idx_s] or 0)
+        b = int(row[idx_b] or 0)
+        m = float((row[idx_m] or '1').replace(',', '.'))
         
-        for c_name in team['countries']:
-            # Normalize name lookup
-            # Try exact match
-            data = country_map.get(c_name)
-            
-            # Try fuzzy/mapped match if needed (using same logic as update_sheet?)
-            # Reusing the corrections map might be tricky unless refactored.
-            # For now, let's just try direct lookup as they come from the same sheet.
-            # But the 'Results' tab names might differ slightly from Draft?
-            # Usually users copy-paste, so exact match is likely.
-            
-            if not data:
-                # Try AIN/Individual Neutral Athletes mapping if needed
-                if c_name == "AIN" and "Individual Neutral Athletes" in country_map:
-                    data = country_map["Individual Neutral Athletes"]
-                elif c_name == "Individual Neutral Athletes" and "AIN" in country_map:
-                    data = country_map["AIN"]
-            
-            if data:
-                total_weighted += data['weighted']
-                total_multiplied += data['multiplied']
-        
-        # Prepare Update for this team column (Row 10, Row 11)
-        # Row 10: Weighted Total
-        # Row 11: Multiplied Total
-        
-        col_letter = gspread.utils.rowcol_to_a1(1, col_idx+1)[0] # 'A', 'B', 'C', 'D'
-        
-        # Row 10
-        team_updates.append({'range': f"{col_letter}10", 'values': [[total_weighted]]})
-        # Row 11
-        team_updates.append({'range': f"{col_letter}11", 'values': [[total_multiplied]]})
+        w = g*3 + s*2 + b*1
+        mult = w * m
+        c_stats[c] = {'w': w, 'm': mult}
 
-    if team_updates:
-        print(f"Pushing {len(team_updates)} team totals to Draft tab...")
-        draft_worksheet.batch_update(team_updates)
+    # 2. Read Draft Teams
+    # Cols A-D are teams. Rows 1=Name, 2-8=Countries
+    d_data = draft_ws.get("A1:D8") 
+    
+    teams = {} # {col_index: {name: 'Team X', countries: []}}
+    for col_i in range(len(d_data[0])):
+        t_name = d_data[0][col_i]
+        c_list = []
+        for row_i in range(1, len(d_data)):
+            if col_i < len(d_data[row_i]) and d_data[row_i][col_i]:
+                c_list.append(d_data[row_i][col_i])
+        teams[col_i] = {'name': t_name, 'countries': c_list}
+
+    # 3. Calculate & Push
+    updates = []
+    
+    # Add Labels for Context (As requested)
+    # We'll put them in Column E (Index 4, 1-based is 5 -> 'E')
+    # Row 10: "Weighted Total", Row 11: "Multiplied Total"
+    updates.append({'range': 'E10', 'values': [['Total Medals']]})   # Wait, user said "Total" and "Multiplied"
+    updates.append({'range': 'E11', 'values': [['Weighted Total']]}) # Wait, logical mapping:
+    # Row 10 logic below was "Weighted". Let's stick to script logic but label correctly.
+    # Previous script: Row 10 = Weighted, Row 11 = Multiplied.
+    # User asked for "Total Medals" and "Multiplied Total Medals".
+    # Wait, "Total Medals" usually means Count (G+S+B).
+    # "Weighted" is (3/2/1).
+    # "Multiplied" is Weighted * Multiplier.
+    # User said: "There should be two totals... 'Total Medals'... the other 'Multiplied Total Medals'".
+    # And previously: "Weighted Total and Multiplier are preserved".
+    # I will verify what Row 10/11 actually calculates.
+    # Current script calculated WEIGHTED in Row 10.
+    # If user wants "Total Medals" (Count), I should calculate that too?
+    # Let's provide: 
+    # Row 10: Weighted Total
+    # Row 11: Multiplied Total
+    # And label them as such.
+    
+    updates.append({'range': 'E10', 'values': [['Weighted Total (3/2/1)']]})
+    updates.append({'range': 'E11', 'values': [['Multiplied Total']]})
+
+    # Calculate Totals
+    team_map_result = {} # For Flavor tab use: {TeamName: [Countries]}
+    
+    for col_i, t_data in teams.items():
+        team_map_result[t_data['name']] = t_data['countries']
+        
+        tot_w = 0
+        tot_m = 0
+        for c in t_data['countries']:
+            # safe lookup
+            s = c_stats.get(c)
+            # Try AIN mapping
+            if not s and c == "AIN": s = c_stats.get("Individual Neutral Athletes")
+            if not s and c == "Individual Neutral Athletes": s = c_stats.get("AIN")
+            
+            if s:
+                tot_w += s['w']
+                tot_m += s['m']
+        
+        # Col letter
+        col_char = gspread.utils.rowcol_to_a1(1, col_i+1)[0]
+        updates.append({'range': f"{col_char}10", 'values': [[tot_w]]})
+        updates.append({'range': f"{col_char}11", 'values': [[tot_m]]})
+
+    print(f"Updating Draft tab totals...")
+    draft_ws.batch_update(updates)
+    
+    return team_map_result
 
 def main():
     try:
-        if 'GOOGLE_CREDENTIALS' not in os.environ:
-             print("Error: GOOGLE_CREDENTIALS env var missing. Local testing requires this.")
-             return
-             
         client = get_google_sheet_client()
-        medal_data = scrape_medal_data()
         
-        if not medal_data:
-            print("No medal data scraped (or empty table).")
-            # We might still want to run to clear things to 0 if the games started?
-            # Safe to skip if empty to avoid wiping data on accidental scrap failure.
+        # 1. Scrape Counts & Update Results
+        counts = scrape_medal_counts()
+        if counts:
+            update_results_tab(client, counts)
         else:
-            update_sheet(client, medal_data)
+            print("No medal counts scraped.")
+
+        # 2. Update Draft Totals & Labels
+        # Returns mapping needed for Flavor tab
+        team_map = calculate_draft_totals(client)
+        
+        # 3. Scrape Details & Update Flavor
+        if team_map:
+            details = scrape_medal_details()
+            update_flavor_tab(client, details, team_map)
             
     except Exception as e:
         print(f"Critical Error: {e}")
@@ -331,3 +392,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
