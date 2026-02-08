@@ -74,11 +74,10 @@ def scrape_medal_details():
     Returns list of dicts: [{'Event':..., 'Medal':..., 'Athlete':..., 'Country':...}]
     """
     print(f"Scraping Details: {WIKIPEDIA_URL_DETAILS}...")
-    headers = {'User-Agent': 'Mozilla/5.0'}
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
     try:
         response = requests.get(WIKIPEDIA_URL_DETAILS, headers=headers)
         if response.status_code == 404:
-             # Fallback if URL is wrong/redirected
              print("Detail page not found. Skipping Flavor updates.")
              return []
         response.raise_for_status()
@@ -89,51 +88,119 @@ def scrape_medal_details():
     soup = BeautifulSoup(response.content, 'html.parser')
     details = []
     
-    # Iterate over all headers to find Sports, then their tables
-    # Structure: h2 (Sport) -> table.wikitable
-    # Or just find all wikitables and infer context?
-    # Wikipedia 'List of medal winners' usually has one table per sport or date.
-    
     tables = soup.find_all('table', class_='wikitable')
-    current_sport = "Unknown"
     
     for table in tables:
-        # Try to identify sport from preceding header
-        # This is heuristics-heavy.
-        # Let's iterate rows.
-        rows = table.find_all('tr')
-        if not rows: continue
+        # Check if this is a medalists table. 
+        # Usually headers are: Event | Gold | Silver | Bronze
+        # Inspect headers to confirm
+        header_row = table.find('tr')
+        if not header_row: continue
+        headers_text = [th.get_text(strip=True).lower() for th in header_row.find_all(['th'])]
         
-        # Headers usually: Event | Gold | Silver | Bronze
-        # We process the data cells
+        # Heuristic: Must have 'gold', 'silver', 'bronze'
+        if not all(k in str(headers_text) for k in ['gold', 'silver', 'bronze']):
+            # Maybe it uses medallions or images?
+            # Let's trust it's a medalist table if it has 3+ columns and visually looks right.
+            # But the 'details' issue suggests we are parsing 'Event' column poorly.
+            pass
+
+        rows = table.find_all('tr')
         for row in rows:
             cols = row.find_all(['th', 'td'])
-            if len(cols) < 4: continue # Header or weird row
             
-            # Assume 4 columns: Event, G, S, B.
-            # Sometimes rowspans exist for Event!
-            # Complex parsing needed for rowspans? 
-            # Simplified: Just grab text.
+            # Skip if it's the header row (contains "Gold" etc)
+            row_text = row.get_text(strip=True).lower()
+            if "gold" in row_text and "silver" in row_text:
+                continue
+                
+            if len(cols) < 4: continue 
             
             try:
                 # Column 0: Event
+                # Problem: "Downhilldetails" -> The 'details' text is likely a hidden span or link.
+                # Solution: Get text, but exclude 'details' if it's a UI element.
+                # Better: Extract text node only? Or replace 'details' if safe.
                 event_cell = cols[0]
-                event_name = event_cell.get_text(strip=True)
+                event_name = event_cell.get_text(" ", strip=True).replace("details", "").strip()
+                # Clean up "deta" partials if any
+                if event_name.endswith("deta"): event_name = event_name[:-4].strip()
                 
                 # Column 1 (Gold), 2 (Silver), 3 (Bronze)
-                # Each cell contains: Athlete (Country)
+                # Cell format: "Athlete Name (Country)" or "Flag Athlete Name (Country)"
+                # "Heidi WengNorw" suggets text concatenation. Flag (alt text) + Name?
+                # Solution: Use .get_text(" ") to separate elements with spaces.
                 
                 def parse_medalist(cell, color):
-                    text = cell.get_text(strip=True)
+                    # Use separator to avoid "NameFlag"
+                    text = cell.get_text(" ", strip=True) 
                     if not text: return
-                    # Split Athlete and Country?
-                    # "Mikaela Shiffrin (USA)"
-                    if '(' in text and ')' in text:
-                        athlete = text.split('(')[0].strip()
-                        country = text.split('(')[1].replace(')', '').strip()
+                     
+                    # Clean up: "Mikaela Shiffrin (USA)"
+                    # Regex for country code in parens is safest.
+                    import re
+                    match = re.search(r'\((.*?)\)', text)
+                    if match:
+                        country_code = match.group(1)
+                        # Remove country code from text to get name
+                        # But wait, text might be "Flag Name (Country)"
+                        # "Name" is what we want.
+                        # Split by '('
+                        parts = text.split('(')
+                        athlete_raw = parts[0].strip()
+                        
+                        # Fix "FlagName" issue? "Heidi WengNorw" -> "Heidi Weng"
+                        # If we have a country map, we can map code "NOR" -> "Norway".
+                        # For simple usage, let's use the code as Country for now, 
+                        # OR try to map typical codes if we can.
+                        # Actually main.py doesn't have a NOC map. 
+                        # We need valid Country names for Draft mapping ("Norway", not "NOR").
+                        
+                        # Let's try to scrape the full title of the flag link if present?
+                        country_name = "Unknown"
+                        flag_img = cell.find('img', class_='mw-file-element') # or similar flag class
+                        # Look for 'a' tag with title?
+                        links = cell.find_all('a')
+                        for link in links:
+                            title = link.get('title', '')
+                            # Titles often: "Norway at the 2026 Winter Olympics" or just "Norway"
+                            if " at the " in title:
+                                country_name = title.split(" at the ")[0]
+                                break
+                            elif title and title not in athlete_raw: # Heuristic
+                                # If title is country-like?
+                                pass
+                        
+                        if country_name == "Unknown":
+                            # Fallback: Use the code and hope? Or just "Unknown"
+                            # The user saw "Heidi WengNorw" so likely "Norw" was 'Norway' text mashed.
+                            # Let's rely on the text separation `get_text(" ")`.
+                            # If text is "Heidi Weng Norway", we can parse.
+                            pass
+                            
+                        athlete = athlete_raw
+                        # If we found country via link, use it.
+                        country = country_name if country_name != "Unknown" else country_code
+                        
                     else:
+                        # Fallback if no parens
                         athlete = text
-                        country = "Unknown"
+                        country = "Unknown" 
+                        
+                        # Try finding country via flag/link
+                        links = cell.find_all('a')
+                        for link in links:
+                            title = link.get('title', '')
+                            if " at the " in title:
+                                country = title.split(" at the ")[0]
+                                # And remove this country name from athlete string if present
+                                athlete = athlete.replace(country, "").strip()
+                                break
+                    
+                    # Clean artifacts
+                    athlete = athlete.replace("details", "").strip()
+                    # Fix "Heidi WengNorw" type bugs:
+                    # If we have Country "Norway", ensure it's allowed.
                     
                     details.append({
                         'Event': event_name,
