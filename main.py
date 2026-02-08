@@ -314,7 +314,16 @@ def update_flavor_tab(client, details, team_map):
                  existing_sigs.add(sig)
 
     new_rows = []
-    today_str = datetime.now().strftime("%Y-%m-%d")
+    
+    # Calculate Date in CST (Central Standard Time)
+    # GitHub Actions are UTC. CST is UTC-6, CDT is UTC-5.
+    # Current time is Feb. 8th UTC, but Feb. 7th CST.
+    # Simple fix: utcnow() - 6 hours.
+    # Or just use timezone specific library if available.
+    # We'll use datetime.utcnow() and subtract 6 hours for now to be safe without pytz.
+    from datetime import timedelta
+    cst_now = datetime.utcnow() - timedelta(hours=6)
+    today_str = cst_now.strftime("%Y-%m-%d")
     
     for d in details:
         sig = f"{d['Event']}_{d['Medal']}_{d['Athlete']}"
