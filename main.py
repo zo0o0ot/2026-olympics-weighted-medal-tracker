@@ -173,12 +173,141 @@ def update_sheet(client, scraped_data):
     else:
         print("No updates to push.")
 
-    # Calculate and Update Flavor Text?
-    # This is harder to automate without an event feed (API).
-    # Wikipedia doesn't easily give "New rows since X".
-    # Strategy: Just keep the Results accurate for now. 
-    # Flavor text might remain manual or require a better data source (API).
+    # Calculate and Update Team Totals
+    calculate_team_results(client, results_worksheet)
     print("Results updated.")
+
+def calculate_team_results(client, results_worksheet):
+    """
+    Calculates team totals based on the Results tab and updates the Draft tab.
+    """
+    print("Calculating team results...")
+    
+    # 1. Get current data from Results tab (all values to compute totals)
+    # Expected columns: Country (A), Gold (B), Silver (C), Bronze (D), Weighted (E), Multiplier (F), Multiplied (G)
+    # But since we just pushed updates, we should re-read or use local data.
+    # Re-reading is safer to catch any formula updates.
+    results_data = results_worksheet.get_all_values()
+    headers = results_data[0]
+    
+    try:
+        col_country = headers.index('Country')
+        # We need to compute weighted/multiplied ourselves if the formulas aren't yet updated/readable
+        # Or we can trust the formulas updated.
+        # But script runs fast, formulas might lag in API read?
+        # Better to compute in Python:
+        col_gold = headers.index('Gold')
+        col_silver = headers.index('Silver')
+        col_bronze = headers.index('Bronze')
+        # We need Multiplier from sheet
+        col_multiplier = headers.index('Multiplier') # Check exact name? "Multiplier" or "Multiplied Total"?
+        # Browser analysis: Col F is Multiplier.
+    except ValueError:
+        print("Error: Could not find required headers (Country, Gold, Silver, Bronze, Multiplier) in Results tab.")
+        return
+
+    # Build Country Data Map
+    country_map = {}
+    for row in results_data[1:]:
+        name = row[col_country]
+        if not name: continue
+        
+        try:
+            g = int(row[col_gold]) if row[col_gold] else 0
+            s = int(row[col_silver]) if row[col_silver] else 0
+            b = int(row[col_bronze]) if row[col_bronze] else 0
+            
+             # Handle empty multiplier
+            mult = row[col_multiplier]
+            if not mult: mult = 1
+            else: mult = float(mult.replace(',', '.')) # Handle potential formatting
+            
+            weighted = (g * 3) + (s * 2) + (b * 1)
+            multiplied = weighted * mult
+            
+            country_map[name] = {
+                'weighted': weighted,
+                'multiplied': multiplied
+            }
+        except (ValueError, IndexError):
+            continue
+
+    # 2. Get Team Mappings from Draft Tab
+    sheet = client.open_by_key(SHEET_KEY)
+    draft_worksheet = sheet.worksheet(DRAFT_TAB_NAME)
+    
+    # Assuming Teams use Columns A, B, C, D (Rows 2-8 for countries)
+    # Row 1 is headers (Team Names)
+    # Rows 2-8 are Countries
+    
+    # Read strict range A1:D8
+    draft_data = draft_worksheet.get(f"A1:D8") # List of lists
+    
+    if not draft_data:
+        print("Error: Could not read Draft tab.")
+        return
+        
+    teams = {}
+    # Iterate columns (A, B, C, D -> 0, 1, 2, 3)
+    num_cols = len(draft_data[0])
+    
+    for col_idx in range(num_cols):
+        team_name = draft_data[0][col_idx] # Header
+        countries = []
+        for row_idx in range(1, len(draft_data)):
+            if col_idx < len(draft_data[row_idx]):
+                 c_name = draft_data[row_idx][col_idx]
+                 if c_name: countries.append(c_name)
+        
+        teams[col_idx] = {'name': team_name, 'countries': countries}
+
+    # 3. Compute Team Totals
+    team_updates = []
+    
+    # We will write totals to Row 10 (Weighted) and Row 11 (Multiplied)
+    # Step 1: Write Labels in Row 9 maybe? Or let user handle labels.
+    # The user asked for "two totals...". I'll put them in Row 10 and 11.
+    
+    for col_idx, team in teams.items(): # 0, 1, 2, 3
+        total_weighted = 0
+        total_multiplied = 0
+        
+        for c_name in team['countries']:
+            # Normalize name lookup
+            # Try exact match
+            data = country_map.get(c_name)
+            
+            # Try fuzzy/mapped match if needed (using same logic as update_sheet?)
+            # Reusing the corrections map might be tricky unless refactored.
+            # For now, let's just try direct lookup as they come from the same sheet.
+            # But the 'Results' tab names might differ slightly from Draft?
+            # Usually users copy-paste, so exact match is likely.
+            
+            if not data:
+                # Try AIN/Individual Neutral Athletes mapping if needed
+                if c_name == "AIN" and "Individual Neutral Athletes" in country_map:
+                    data = country_map["Individual Neutral Athletes"]
+                elif c_name == "Individual Neutral Athletes" and "AIN" in country_map:
+                    data = country_map["AIN"]
+            
+            if data:
+                total_weighted += data['weighted']
+                total_multiplied += data['multiplied']
+        
+        # Prepare Update for this team column (Row 10, Row 11)
+        # Row 10: Weighted Total
+        # Row 11: Multiplied Total
+        
+        col_letter = gspread.utils.rowcol_to_a1(1, col_idx+1)[0] # 'A', 'B', 'C', 'D'
+        
+        # Row 10
+        team_updates.append({'range': f"{col_letter}10", 'values': [[total_weighted]]})
+        # Row 11
+        team_updates.append({'range': f"{col_letter}11", 'values': [[total_multiplied]]})
+
+    if team_updates:
+        print(f"Pushing {len(team_updates)} team totals to Draft tab...")
+        draft_worksheet.batch_update(team_updates)
 
 def main():
     try:
