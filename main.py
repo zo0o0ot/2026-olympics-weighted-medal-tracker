@@ -218,13 +218,25 @@ def scrape_medal_details():
                 
     return details
 
+# --- Mappings ---
+COUNTRY_NAME_MAP = {
+    "United States": "USA",
+    "South Korea": "Republic of Korea",
+    "Great Britain": "United Kingdom",
+    "China": "People's Republic of China",
+    "ROC": "Russian Olympic Committee",
+    "Czech Republic": "Czechia"
+}
+
 def update_results_tab(client, medal_counts):
     sheet = client.open_by_key(SHEET_KEY)
     ws = sheet.worksheet(RESULTS_TAB_NAME)
     data = ws.get_all_values()
     
     # Map Helpers
-    name_map = {"Individual Neutral Athletes": "AIN"} # Add others here
+    # "Individual Neutral Athletes" is a special case often requiring manual handling or specific mapping
+    name_map = {"Individual Neutral Athletes": "AIN"} 
+    
     updates = []
     
     # Identify Columns
@@ -243,17 +255,32 @@ def update_results_tab(client, medal_counts):
         c_name = row[col_c]
         if not c_name: continue
         
-        # Lookup
-        metrics = medal_counts.get(c_name)
-        if not metrics:
-            # Check mappings
-            search_key = c_name
-            # Reverse map check
-            for k, v in name_map.items():
-                if v == c_name: search_key = k
-            
-            metrics = medal_counts.get(search_key)
+        # Lookup Logic:
+        # 1. Direct match
+        # 2. Reverse Map (Sheet Name -> Scraped Name)
+        # 3. Known Mappings (Scraped Name -> Sheet Name)
+        # 4. Canonical transformations?
         
+        metrics = medal_counts.get(c_name)
+        
+        if not metrics:
+            # Check custom map (Sheet Name might be "USA", Scraped is "United States")
+            # We need to find if any key in medal_counts maps to c_name via COUNTRY_NAME_MAP
+            
+            # Simple reverse lookup in COUNTRY_NAME_MAP:
+            # If c_name is "USA", look for key "United States" where val is "USA"
+            for scraped_name, sheet_name in COUNTRY_NAME_MAP.items():
+                if sheet_name == c_name:
+                    metrics = medal_counts.get(scraped_name)
+                    if metrics: break
+            
+            # If still not found, try the specific name_map for AIN
+            if not metrics:
+                 for k, v in name_map.items():
+                    if v == c_name: 
+                        metrics = medal_counts.get(k)
+                        if metrics: break
+
         if metrics:
             updates.append({'range': gspread.utils.rowcol_to_a1(i, col_g+1), 'values': [[metrics['Gold']]]})
             updates.append({'range': gspread.utils.rowcol_to_a1(i, col_s+1), 'values': [[metrics['Silver']]]})
