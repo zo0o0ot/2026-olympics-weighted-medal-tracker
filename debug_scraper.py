@@ -14,62 +14,59 @@ def scrape_medal_counts():
         return {}
 
     soup = BeautifulSoup(response.content, 'html.parser')
-    table = soup.find('table', class_='wikitable')
-    if not table:
-        print("No table found with class 'wikitable'")
-        return {}
+    tables = soup.find_all('table', class_='wikitable')
+    print(f"Found {len(tables)} wikitables.")
     
-    # Print table sample
-    print(f"Table found. Inspecting first few rows...")
-
-    medal_data = {}
-    for i, row in enumerate(table.find_all('tr')):
-        if i == 0:
-            # Header row
-            headers = [th.get_text(strip=True) for th in row.find_all(['th', 'td'])]
-            print(f"Headers: {headers}")
-            continue
-            
-        cols = row.find_all(['th', 'td'])
-        col_texts = [c.get_text(strip=True) for c in cols]
-        print(f"Row {i}: {col_texts}")
+    for t_idx, table in enumerate(tables):
+        print(f"\n--- Table {t_idx} ---")
+        rows = table.find_all('tr')
+        if not rows: continue
         
-        if len(cols) < 5: continue
-        try:
-            # Helper to safely get text
-            def get_text(idx): return cols[idx].get_text(strip=True)
+        # Print header
+        header_row = rows[0]
+        headers = [th.get_text(strip=True) for th in header_row.find_all(['th', 'td'])]
+        print(f"Headers: {headers}")
+        
+        # Check first few rows
+        for i, row in enumerate(rows[1:6]):
+            cols = [c.get_text(strip=True) for c in row.find_all(['th', 'td'])]
+            print(f"Row {i}: {cols}")
             
-            # Logic for typical Olympics table: Rank | Country | G | S | B | Total
-            # Detect country column (usually 2nd, index 1)
-            # The rank column 0 might be th or td.
-            
-            # Heuristic: Check column count.
-            # If 6 columns: Rank | Country | G | S | B | Total
-            # If 5 columns: Country | G | S | B | Total (Rank might be missing/merged)
-            
-            # The country usually has a flag+link.
-            # Let's try flexible index.
-            
-            country_idx = 1
-            if len(cols) == 5: country_idx = 0
-            
-            country_text = get_text(country_idx)
-            country_name = country_text.split('(')[0].strip()
-            
-            # Numbers are usually last 4 columns: G, S, B, Total
-            bronze = int(cols[-2].get_text(strip=True))
-            silver = int(cols[-3].get_text(strip=True))
-            gold = int(cols[-4].get_text(strip=True))
-            
-            medal_data[country_name] = {'Gold': gold, 'Silver': silver, 'Bronze': bronze}
-        except (ValueError, IndexError) as e:
-            print(f"  Skipping row {i} due to error: {e}")
-            continue
+    # Specific check for Netherlands
+    print("\n--- Searching for 'Netherlands' ---")
+    if "Netherlands" in soup.get_text():
+        print("'Netherlands' FOUND in page text.")
+    else:
+        print("'Netherlands' NOT FOUND in page text.")
+        
+    if "Korea" in soup.get_text():
+        print("'Korea' FOUND in page text.")
+
+    # Run the scraping logic on ALL tables to see if we find them
+    print("\n--- Re-running scraping logic on ALL tables ---")
+    medal_data = {}
+    for t_idx, table in enumerate(tables):
+        # same logic as main.py (simplified)
+        for row in table.find_all('tr')[1:]:
+            cols = row.find_all(['th', 'td'])
+            if len(cols) < 5: continue
+            try:
+                def get_text(idx): return cols[idx].get_text(strip=True)
+                country_idx = 1
+                if len(cols) == 5: country_idx = 0
+                
+                c_text = get_text(country_idx)
+                c_name = c_text.split('(')[0].replace('*', '').strip()
+                
+                # Check knowns
+                if "Netherlands" in c_name or "Korea" in c_name:
+                    print(f"MATCH in Table {t_idx}: {c_name} -> {cols[-1].get_text(strip=True)} Total")
+                    
+                g = int(cols[-4].get_text(strip=True)) # Gold
+                medal_data[c_name] = g # Just dummy
+            except: pass
             
     return medal_data
 
 if __name__ == "__main__":
-    data = scrape_medal_counts()
-    print("\n--- Scraped Data ---")
-    for k, v in data.items():
-        print(f"{k}: {v}")
+    scrape_medal_counts()

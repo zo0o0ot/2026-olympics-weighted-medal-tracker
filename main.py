@@ -225,8 +225,24 @@ COUNTRY_NAME_MAP = {
     "Great Britain": "United Kingdom",
     "China": "People's Republic of China",
     "ROC": "Russian Olympic Committee",
-    "Czech Republic": "Czechia"
+    "Czech Republic": "Czechia",
+    "Netherlands": "Netherlands", # Explicit map just in case
+    "The Netherlands": "Netherlands"
 }
+
+def normalize_country_name(name):
+    """
+    Normalizes a country name for fuzzy matching.
+    - Lowercase
+    - Remove 'the', 'republic of', 'people's republic of'
+    - Strip whitespace
+    """
+    if not name: return ""
+    name = name.lower()
+    for prefix in ["the ", "republic of ", "people's republic of "]:
+        if name.startswith(prefix):
+            name = name[len(prefix):]
+    return name.strip()
 
 def update_results_tab(client, medal_counts):
     sheet = client.open_by_key(SHEET_KEY)
@@ -376,9 +392,10 @@ def update_flavor_tab(client, details, team_map):
                 found = True
                 break
             
-            # Check 2: Case insensitive
+            # Check 2: Fuzzy / Case insensitive
+            c_norm = normalize_country_name(c_name)
             for c in countries:
-                if c.lower() == c_name.lower():
+                if normalize_country_name(c) == c_norm:
                     owner_team = t_name
                     found = True
                     break
@@ -387,10 +404,20 @@ def update_flavor_tab(client, details, team_map):
             # If d['Country'] is "United States", maybe team has "USA"
             if not found:
                 mapped_name = COUNTRY_NAME_MAP.get(c_name)
+                # Direct Map Check
                 if mapped_name and mapped_name in countries:
                     owner_team = t_name
                     found = True
                     break
+                
+                # Check normalized map result
+                if mapped_name:
+                    m_norm = normalize_country_name(mapped_name)
+                    for c in countries:
+                        if normalize_country_name(c) == m_norm:
+                            owner_team = t_name
+                            found = True
+                            break
         
         # New Row Format: [Date, Country, Medal, Event, Athlete, Team]
         # We use today's date because Wikipedia doesn't provide it easily.
@@ -499,18 +526,28 @@ def calculate_draft_totals(client):
                  mapped = COUNTRY_NAME_MAP.get(c) 
                  if mapped: s = c_stats.get(mapped)
                  
-                 # Check reverse: User typed "USA" -> mapped from "United States" (unlikely needed if results keys are sheet names)
-                 # But what if Results tab has "United States" because someone manually changed it?
-                 # Assuming Results tab uses keys that match `update_results_tab` logic...
-                 # But let's be safe.
+                 # Fuzzy Match Attempt
                  if not s:
-                     # Reverse: Try to find if 'c' is the value in map?
-                     # No, keys in c_stats come from Results tab.
-                     pass
+                     c_norm = normalize_country_name(c)
+                     # Iterate all stats keys
+                     for k, v in c_stats.items():
+                         if normalize_country_name(k) == c_norm:
+                             s = v
+                             break
+                     # Try mapping keys too?
+                     if not s:
+                         for k, v in COUNTRY_NAME_MAP.items():
+                             # If user typed "The Netherlands", norm is "netherlands"
+                             # Map key might be "Netherlands", value "Netherlands"
+                             if normalize_country_name(k) == c_norm:
+                                 # Found map key. Now get stats for value?
+                                 mapped_val = v
+                                 s = c_stats.get(mapped_val)
+                                 if s: break
 
             # Try AIN mapping
+            if not s and "individual" in c.lower(): s = c_stats.get("AIN") or c_stats.get("Individual Neutral Athletes")
             if not s and c == "AIN": s = c_stats.get("Individual Neutral Athletes")
-            if not s and c == "Individual Neutral Athletes": s = c_stats.get("AIN")
             
             if s:
                 tot_w += s['w']
