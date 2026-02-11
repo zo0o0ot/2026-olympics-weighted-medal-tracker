@@ -436,17 +436,111 @@ def update_flavor_tab(client, details, team_map):
         # We use today's date because Wikipedia doesn't provide it easily.
         # User asked for "date they were earned". 
         # Since we run daily, "today" is a good approximation for NEW rows.
-        # For historical rows (already scraped), we can't backfill easily without a better source.
-        # But this solves the "updates for each team per day" request going forward.
         
         new_rows.append([today_str, d['Country'], d['Medal'], d['Event'], d['Athlete'], owner_team])
         existing_sigs.add(sig) # Prevent dupes within same batch
 
     if new_rows:
         print(f"Adding {len(new_rows)} new rows to Flavor tab.")
-        ws.append_rows(new_rows)
+        # append_rows needs a list of lists
+        ws.append_rows(new_rows, value_input_option='USER_ENTERED')
     else:
         print("No new Flavor entries.")
+
+def repair_flavor_teams(client, team_map):
+    """
+    One-off / Retroactive fix:
+    Iterates through ALL Flavor tab rows.
+    If a row has a Country that maps to a Team, but the current Team is 'Free Agent' (or empty),
+    update it to the correct Team.
+    """
+    print("Running Retroactive Flavor Team Repair...")
+    sheet = client.open_by_key(SHEET_KEY)
+    ws = sheet.worksheet(FLAVOR_TAB_NAME)
+    data = ws.get_all_values()
+    
+    if not data: return
+
+    headers = data[0]
+    try:
+        col_country = headers.index('Country')
+        col_team = headers.index('Team')
+    except ValueError:
+        print("Flavor tab missing headers for Repair.")
+        return
+
+    updates = []
+    
+    for i, row in enumerate(data[1:], start=2):
+        # Safety check for row length
+        if len(row) <= max(col_country, col_team): continue
+        
+        current_team = row[col_team]
+        c_name = row[col_country]
+        
+        # Only try to repair if it looks like it needs it (Optional: or correct mismatch?)
+        # Let's be safe: If it's "Free Agent" or empty, DEFINITELY try to fix.
+        if current_team not in ["Free Agent", ""]: 
+             continue
+            
+        # --- Logic from update_flavor_tab (Shared) ---
+        owner_team = "Free Agent"
+        found = False
+        
+        # 1. Direct
+        for t_name, countries in team_map.items():
+            if c_name in countries:
+                owner_team = t_name
+                found = True
+                break
+        
+        # 2. Fuzzy
+        if not found:
+            c_norm = normalize_country_name(c_name)
+            for t_name, countries in team_map.items():
+                for c in countries:
+                    if normalize_country_name(c) == c_norm:
+                        owner_team = t_name
+                        found = True
+                        break
+                if found: break
+        
+        # 3. Map Rule
+        if not found:
+            mapped_name = COUNTRY_NAME_MAP.get(c_name)
+            if mapped_name:
+                # Direct check
+                for t_name, countries in team_map.items():
+                    if mapped_name in countries:
+                        owner_team = t_name
+                        found = True
+                        break
+                
+                # Normalized Map check
+                if not found:
+                    m_norm = normalize_country_name(mapped_name)
+                    for t_name, countries in team_map.items():
+                        for c in countries:
+                             if normalize_country_name(c) == m_norm:
+                                 owner_team = t_name
+                                 found = True
+                                 break
+                        if found: break
+        
+        # --- Apply Update if Found & Different ---
+        if found and owner_team != current_team:
+            print(f"Repairing Row {i}: {c_name} -> {owner_team} (Was: '{current_team}')")
+            # Convert to A1 notation for update
+            # col_team is 0-indexed. gspread is 1-indexed.
+            col_letter = gspread.utils.rowcol_to_a1(1, col_team + 1)[0]
+            cell_range = f"{col_letter}{i}"
+            updates.append({'range': cell_range, 'values': [[owner_team]]})
+
+    if updates:
+        ws.batch_update(updates)
+        print(f"Repaired {len(updates)} Flavor rows.")
+    else:
+        print("No Flavor rows needed repair.")
 
 def calculate_draft_totals(client):
     """
@@ -595,6 +689,9 @@ def main():
         if team_map:
             details = scrape_medal_details()
             update_flavor_tab(client, details, team_map)
+            
+            # 4. Retroactive Repair (One-off/Ongoing safety)
+            repair_flavor_teams(client, team_map)
             
     except Exception as e:
         print(f"Critical Error: {e}")
