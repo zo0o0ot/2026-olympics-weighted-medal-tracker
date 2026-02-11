@@ -280,17 +280,30 @@ def update_results_tab(client, medal_counts):
         metrics = medal_counts.get(c_name)
         
         if not metrics:
-            # Check custom map (Sheet Name might be "USA", Scraped is "United States")
-            # We need to find if any key in medal_counts maps to c_name via COUNTRY_NAME_MAP
+            # 2. Try Fuzzy Match against Medal Counts (Scraped Data)
+            #    (Sheet: "The Netherlands", Scraped: "Netherlands") -> Match!
+            c_norm = normalize_country_name(c_name)
+            for k, v in medal_counts.items():
+                if normalize_country_name(k) == c_norm:
+                    metrics = v
+                    break
             
-            # Simple reverse lookup in COUNTRY_NAME_MAP:
-            # If c_name is "USA", look for key "United States" where val is "USA"
-            for scraped_name, sheet_name in COUNTRY_NAME_MAP.items():
-                if sheet_name == c_name:
-                    metrics = medal_counts.get(scraped_name)
-                    if metrics: break
+            # 3. Try Mapping (Reverse Lookup)
+            if not metrics:
+                for scraped_name, sheet_name in COUNTRY_NAME_MAP.items():
+                     # Check exact or fuzzy match of Sheet Name
+                     if sheet_name == c_name or normalize_country_name(sheet_name) == c_norm:
+                        metrics = medal_counts.get(scraped_name)
+                        # If map key isn't exactly in medal_counts, try fuzzy match there too
+                        if not metrics:
+                             s_norm = normalize_country_name(scraped_name)
+                             for mk, mv in medal_counts.items():
+                                 if normalize_country_name(mk) == s_norm:
+                                     metrics = mv
+                                     break
+                        if metrics: break
             
-            # If still not found, try the specific name_map for AIN
+            # 4. Fallback for AIN (Legacy check)
             if not metrics:
                  for k, v in name_map.items():
                     if v == c_name: 
