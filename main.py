@@ -361,18 +361,35 @@ def update_flavor_tab(client, details, team_map):
         
         # Find Team
         owner_team = "Free Agent"
+        
+        # Normalize for matching: allow flexible matching against team list
+        # Map scraped name to potential sheet names?
+        # Or just try exact, then map.
+        
+        found = False
         for t_name, countries in team_map.items():
-            # Robust check
+            if found: break
+            
+            # Check 1: Direct presence
             if c_name in countries:
                 owner_team = t_name
+                found = True
                 break
-            # Check for partial matches or "United States" vs "USA"
-            # Our scraping now returns full names "Norway", "United States".
-            # Draft tab usually has full names too.
-            # But let's check normalized
+            
+            # Check 2: Case insensitive
             for c in countries:
                 if c.lower() == c_name.lower():
                     owner_team = t_name
+                    found = True
+                    break
+            
+            # Check 3: Map Lookup
+            # If d['Country'] is "United States", maybe team has "USA"
+            if not found:
+                mapped_name = COUNTRY_NAME_MAP.get(c_name)
+                if mapped_name and mapped_name in countries:
+                    owner_team = t_name
+                    found = True
                     break
         
         # New Row Format: [Date, Country, Medal, Event, Athlete, Team]
@@ -475,6 +492,22 @@ def calculate_draft_totals(client):
         for c in t_data['countries']:
             # safe lookup
             s = c_stats.get(c)
+            
+            # Lookup with Mapping if direct fail
+            if not s:
+                 # Check if 'c' is a key in our map (User typed "United States") -> mapped to "USA"
+                 mapped = COUNTRY_NAME_MAP.get(c) 
+                 if mapped: s = c_stats.get(mapped)
+                 
+                 # Check reverse: User typed "USA" -> mapped from "United States" (unlikely needed if results keys are sheet names)
+                 # But what if Results tab has "United States" because someone manually changed it?
+                 # Assuming Results tab uses keys that match `update_results_tab` logic...
+                 # But let's be safe.
+                 if not s:
+                     # Reverse: Try to find if 'c' is the value in map?
+                     # No, keys in c_stats come from Results tab.
+                     pass
+
             # Try AIN mapping
             if not s and c == "AIN": s = c_stats.get("Individual Neutral Athletes")
             if not s and c == "Individual Neutral Athletes": s = c_stats.get("AIN")
