@@ -1,9 +1,8 @@
 import os
 import json
 import requests
-import gspread
-import pandas as pd
-from oauth2client.service_account import ServiceAccountCredentials
+# import gspread (Moved inside functions)
+# from oauth2client.service_account import ServiceAccountCredentials (Moved inside functions)
 from bs4 import BeautifulSoup
 from datetime import datetime
 
@@ -17,6 +16,9 @@ DRAFT_TAB_NAME = 'Draft'
 
 def get_google_sheet_client():
     """Authenticates with Google Sheets using Service Account."""
+    import gspread
+    from oauth2client.service_account import ServiceAccountCredentials
+    
     creds_json = os.environ.get('GOOGLE_CREDENTIALS')
     if not creds_json:
         raise ValueError("GOOGLE_CREDENTIALS environment variable not found.")
@@ -50,9 +52,18 @@ def scrape_medal_counts():
             def get_text(idx): return cols[idx].get_text(strip=True)
             
             # Logic for typical Olympics table: Rank | Country | G | S | B | Total
-            # Detect country column (usually 2nd, index 1)
+            # Standard Row (6 cols): Rank | Country | ...
+            # Tied Row (5 cols): Country | ... (Rank is spanned)
+            
             country_col_idx = 1
-            # Adjust if rank row is missing or merged? Assume consistent layout.
+            if len(cols) == 5:
+                country_col_idx = 0
+            
+            # Additional Safety: Check if what we think is 'Country' is actually a number (Rank)
+            # If we picked index 0 but it's a number, maybe we are wrong?
+            # Conversely, if we picked index 1 but index 0 was NOT a number, maybe structure is different?
+            # Trust column count for now as primary signal for rowspan.
+
             country_text = get_text(country_col_idx)
             
             # Remove (USA) suffix if widely used
@@ -426,7 +437,7 @@ def update_results_tab(client, medal_counts):
 
         if metrics:
             if matched_key: matched_scraped_keys.add(matched_key)
-            
+            import gspread
             updates.append({'range': gspread.utils.rowcol_to_a1(i, col_c+1), 'values': [[c_name]]}) # Rewrite name to be safe? No.
             # col_g is 0-indexed. rowcol_to_a1 needs 1-indexed.
             updates.append({'range': gspread.utils.rowcol_to_a1(i, col_g+1), 'values': [[metrics['Gold']]]})
@@ -864,6 +875,8 @@ def calculate_draft_totals(client):
                 tot_m += s['m']
         
         # Col letter
+        # Col letter
+        import gspread
         col_char = gspread.utils.rowcol_to_a1(1, col_i+1)[0]
         updates.append({'range': f"{col_char}{row_w_idx}", 'values': [[tot_w]]})
         updates.append({'range': f"{col_char}{row_m_idx}", 'values': [[tot_m]]})
