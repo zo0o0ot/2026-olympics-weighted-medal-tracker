@@ -309,8 +309,15 @@ def update_results_tab(client, medal_counts):
                     if v == c_name: 
                         metrics = medal_counts.get(k)
                         if metrics: break
+            
+            # DEBUG LOGGING for Results Tab
+            if any(t in c_name for t in ["Finland", "Korea", "Netherlands"]):
+                match_status = f"MATCHED (Data: {metrics})" if metrics else "NO MATCH"
+                print(f"RESULTS DEBUG: Sheet Row '{c_name}' -> {match_status}")
 
         if metrics:
+            updates.append({'range': gspread.utils.rowcol_to_a1(i, col_c+1), 'values': [[c_name]]}) # Rewrite name to be safe? No.
+            # col_g is 0-indexed. rowcol_to_a1 needs 1-indexed.
             updates.append({'range': gspread.utils.rowcol_to_a1(i, col_g+1), 'values': [[metrics['Gold']]]})
             updates.append({'range': gspread.utils.rowcol_to_a1(i, col_s+1), 'values': [[metrics['Silver']]]})
             updates.append({'range': gspread.utils.rowcol_to_a1(i, col_b+1), 'values': [[metrics['Bronze']]]})
