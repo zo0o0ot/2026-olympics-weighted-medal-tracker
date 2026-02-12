@@ -482,16 +482,22 @@ def repair_flavor_teams(client, team_map):
         # Let's be safe: If it's "Free Agent" or empty, DEFINITELY try to fix.
         if current_team not in ["Free Agent", ""]: 
              continue
-            
+             
+        # Debug Logging for Targets
+        is_target = any(t in c_name for t in ["Netherlands", "Korea"])
+        
         # --- Logic from update_flavor_tab (Shared) ---
         owner_team = "Free Agent"
         found = False
         
+        match_type = ""
+
         # 1. Direct
         for t_name, countries in team_map.items():
             if c_name in countries:
                 owner_team = t_name
                 found = True
+                match_type = "Direct"
                 break
         
         # 2. Fuzzy
@@ -502,6 +508,7 @@ def repair_flavor_teams(client, team_map):
                     if normalize_country_name(c) == c_norm:
                         owner_team = t_name
                         found = True
+                        match_type = f"Fuzzy (Matched '{c}')"
                         break
                 if found: break
         
@@ -514,6 +521,7 @@ def repair_flavor_teams(client, team_map):
                     if mapped_name in countries:
                         owner_team = t_name
                         found = True
+                        match_type = f"Map Direct ('{mapped_name}')"
                         break
                 
                 # Normalized Map check
@@ -524,8 +532,19 @@ def repair_flavor_teams(client, team_map):
                              if normalize_country_name(c) == m_norm:
                                  owner_team = t_name
                                  found = True
+                                 match_type = f"Map Fuzzy ('{mapped_name}' -> '{c}')"
                                  break
                         if found: break
+        
+        if is_target:
+             if found:
+                 print(f"DEBUG: Found '{c_name}' -> '{owner_team}' via {match_type}")
+             else:
+                 print(f"DEBUG: FAILED to match '{c_name}'. Current Team Map Keys: {list(team_map.keys())}")
+                 # Optional: print close matches?
+
+        # --- Apply Update if Found & Different ---
+
         
         # --- Apply Update if Found & Different ---
         if found and owner_team != current_team:
@@ -576,17 +595,26 @@ def calculate_draft_totals(client):
         c_stats[c] = {'w': w, 'm': mult}
 
     # 2. Read Draft Teams
-    # Cols A-D are teams. Rows 1=Name, 2-8=Countries
-    d_data = draft_ws.get("A1:D8") 
+    # Dynamic read instead of fixed range
+    d_data = draft_ws.get_all_values()
+    
+    # Assumption: Row 1 has Team Names. Susequent rows have countries.
+    # We'll identify valid columns by checking Row 1
+    if not d_data: return {}
     
     teams = {} # {col_index: {name: 'Team X', countries: []}}
-    for col_i in range(len(d_data[0])):
-        t_name = d_data[0][col_i]
-        c_list = []
-        for row_i in range(1, len(d_data)):
-            if col_i < len(d_data[row_i]) and d_data[row_i][col_i]:
-                c_list.append(d_data[row_i][col_i])
-        teams[col_i] = {'name': t_name, 'countries': c_list}
+    header = d_data[0]
+    
+    for col_i, t_name in enumerate(header):
+        if not t_name: continue # Skip empty columns
+        # Initialize
+        teams[col_i] = {'name': t_name, 'countries': []}
+        
+    # Iterate rows for countries
+    for row in d_data[1:]:
+        for col_i, cell_val in enumerate(row):
+             if col_i in teams and cell_val:
+                 teams[col_i]['countries'].append(cell_val)
 
     # 3. Calculate & Push
     updates = []
@@ -594,25 +622,7 @@ def calculate_draft_totals(client):
     # Add Labels for Context (As requested)
     # We'll put them in Column E (Index 4, 1-based is 5 -> 'E')
     # Row 10: "Weighted Total", Row 11: "Multiplied Total"
-    updates.append({'range': 'E10', 'values': [['Total Medals']]})   # Wait, user said "Total" and "Multiplied"
-    updates.append({'range': 'E11', 'values': [['Weighted Total']]}) # Wait, logical mapping:
-    # Row 10 logic below was "Weighted". Let's stick to script logic but label correctly.
-    # Previous script: Row 10 = Weighted, Row 11 = Multiplied.
-    # User asked for "Total Medals" and "Multiplied Total Medals".
-    # Wait, "Total Medals" usually means Count (G+S+B).
-    # "Weighted" is (3/2/1).
-    # "Multiplied" is Weighted * Multiplier.
-    # User said: "There should be two totals... 'Total Medals'... the other 'Multiplied Total Medals'".
-    # And previously: "Weighted Total and Multiplier are preserved".
-    # I will verify what Row 10/11 actually calculates.
-    # Current script calculated WEIGHTED in Row 10.
-    # If user wants "Total Medals" (Count), I should calculate that too?
-    # Let's provide: 
-    # Row 10: Weighted Total
-    # Row 11: Multiplied Total
-    # And label them as such.
-    
-    updates.append({'range': 'E10', 'values': [['Weighted Total (3/2/1)']]})
+    updates.append({'range': 'E10', 'values': [['Total Medals (Weighted)']]})
     updates.append({'range': 'E11', 'values': [['Multiplied Total']]})
 
     # Calculate Totals
