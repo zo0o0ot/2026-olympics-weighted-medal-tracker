@@ -619,11 +619,23 @@ def calculate_draft_totals(client):
     # 3. Calculate & Push
     updates = []
     
-    # Add Labels for Context (As requested)
-    # We'll put them in Column E (Index 4, 1-based is 5 -> 'E')
-    # Row 10: "Weighted Total", Row 11: "Multiplied Total"
-    updates.append({'range': 'E10', 'values': [['Total Medals (Weighted)']]})
-    updates.append({'range': 'E11', 'values': [['Multiplied Total']]})
+    # Determine where to put totals (Dynamic Row)
+    # d_data includes header (Row 1). len(d_data) is the number of rows read.
+    # If d_data has 15 rows, the last row index is 14 (0-based) -> Row 15 (1-based).
+    # We want totals at Row 17 (last + 2).
+    # Minimum Row: 10 (to preserve original layout if list is short)
+    
+    last_data_row = len(d_data)
+    total_row_idx = max(10, last_data_row + 2) # 1-based index for gspread
+    
+    # Row 1: Weighted Total
+    # Row 2: Multiplied Total
+    row_w_idx = total_row_idx
+    row_m_idx = total_row_idx + 1
+    
+    # Labels
+    updates.append({'range': f'E{row_w_idx}', 'values': [['Total Medals (Weighted)']]})
+    updates.append({'range': f'E{row_m_idx}', 'values': [['Multiplied Total']]})
 
     # Calculate Totals
     team_map_result = {} # For Flavor tab use: {TeamName: [Countries]}
@@ -672,10 +684,10 @@ def calculate_draft_totals(client):
         
         # Col letter
         col_char = gspread.utils.rowcol_to_a1(1, col_i+1)[0]
-        updates.append({'range': f"{col_char}10", 'values': [[tot_w]]})
-        updates.append({'range': f"{col_char}11", 'values': [[tot_m]]})
+        updates.append({'range': f"{col_char}{row_w_idx}", 'values': [[tot_w]]})
+        updates.append({'range': f"{col_char}{row_m_idx}", 'values': [[tot_m]]})
 
-    print(f"Updating Draft tab totals...")
+    print(f"Updating Draft tab totals at Row {row_w_idx}...")
     draft_ws.batch_update(updates)
     
     return team_map_result
