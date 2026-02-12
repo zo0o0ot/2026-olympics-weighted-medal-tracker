@@ -267,6 +267,60 @@ def scrape_medal_details():
         
     return details
 
+def cleanup_garbage_rows(client):
+    """
+    Reads the Results tab and removes rows that look like garbage data
+    (e.g. numeric country names '0', '1', '35' or 'Totals').
+    """
+    print("Running Garbage Cleanup on Results tab...")
+    try:
+        sheet = client.open_by_key(SHEET_KEY)
+        ws = sheet.worksheet(RESULTS_TAB_NAME)
+        data = ws.get_all_values()
+        
+        if not data: return
+        
+        header = data[0]
+        cleaned_data = [header] # Keep header
+        removed_count = 0
+        
+        # Identify Country column (usually Index 0)
+        try:
+            col_c = header.index('Country')
+        except ValueError:
+            col_c = 0 # Fallback
+            
+        for row in data[1:]:
+            # Get Country Name
+            if len(row) <= col_c: 
+                continue # Skip malformed
+            
+            c_name = row[col_c].strip()
+            
+            # Criteria for GARBAGE:
+            is_garbage = False
+            if not c_name: is_garbage = True
+            elif c_name.isdigit(): is_garbage = True # "0", "1", "35"
+            elif len(c_name) < 2: is_garbage = True
+            elif "Total" in c_name: is_garbage = True
+            elif "Rank" in c_name: is_garbage = True
+            
+            if is_garbage:
+                print(f"  -> Removing Garbage Row: {row}")
+                removed_count += 1
+            else:
+                cleaned_data.append(row)
+        
+        if removed_count > 0:
+            print(f"Removed {removed_count} garbage rows. Writing back cleaned data...")
+            ws.clear()
+            ws.update('A1', cleaned_data)
+        else:
+            print("No garbage rows found.")
+            
+    except Exception as e:
+        print(f"Error during cleanup: {e}")
+
 # --- Mappings ---
 COUNTRY_NAME_MAP = {
     "United States": "USA",
@@ -822,6 +876,9 @@ def calculate_draft_totals(client):
 def main():
     try:
         client = get_google_sheet_client()
+        
+        # 0. Cleanup Garbage Rows (Automated Maintenance)
+        cleanup_garbage_rows(client)
         
         # 1. Scrape Counts & Validate
         counts = scrape_medal_counts()
