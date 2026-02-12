@@ -1,0 +1,107 @@
+{
+  "Norway": {
+    "Gold": 7,
+    "Silver": 2,
+    "Bronze": 4
+  },
+  "United States": {
+    "Gold": 4,
+    "Silver": 6,
+    "Bronze": 2
+  },
+  "Italy": {
+    "Gold": 4,
+    "Silver": 2,
+    "Bronze": 7
+  },
+  "Switzerland": {
+    "Gold": 4,
+    "Silver": 1,
+    "Bronze": 2
+  },
+  "Germany": {
+    "Gold": 3,
+    "Silver": 3,
+    "Bronze": 2
+  },
+  "France": {
+    "Gold": 3,
+    "Silver": 3,
+    "Bronze": 1
+  },
+  "Sweden": {
+    "Gold": 3,
+    "Silver": 2,
+    "Bronze": 1
+  },
+  "Austria": {
+    "Gold": 2,
+    "Silver": 5,
+    "Bronze": 1
+  },
+  "Japan": {
+    "Gold": 2,
+    "Silver": 2,
+    "Bronze": 4
+  },
+  "Netherlands": {
+    "Gold": 1,
+    "Silver": 2,
+    "Bronze": 0
+  },
+  "Czech Republic": {
+    "Gold": 1,
+    "Silver": 1,
+    "Bronze": 0
+  },
+  "Slovenia": {
+    "Gold": 1,
+    "Silver": 1,
+    "Bronze": 0
+  },
+  "Canada": {
+    "Gold": 0,
+    "Silver": 1,
+    "Bronze": 3
+  },
+  "China": {
+    "Gold": 0,
+    "Silver": 1,
+    "Bronze": 2
+  },
+  "New Zealand": {
+    "Gold": 0,
+    "Silver": 1,
+    "Bronze": 1
+  },
+  "South Korea": {
+    "Gold": 0,
+    "Silver": 1,
+    "Bronze": 1
+  },
+  "Latvia": {
+    "Gold": 0,
+    "Silver": 1,
+    "Bronze": 0
+  },
+  "Poland": {
+    "Gold": 0,
+    "Silver": 1,
+    "Bronze": 0
+  },
+  "Bulgaria": {
+    "Gold": 0,
+    "Silver": 0,
+    "Bronze": 2
+  },
+  "Belgium": {
+    "Gold": 0,
+    "Silver": 0,
+    "Bronze": 1
+  },
+  "Finland": {
+    "Gold": 0,
+    "Silver": 0,
+    "Bronze": 1
+  }
+}
