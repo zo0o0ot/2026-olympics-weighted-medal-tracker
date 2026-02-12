@@ -663,7 +663,6 @@ def calculate_draft_totals(client):
                          if normalize_country_name(k) == c_norm:
                              s = v
                              break
-                     # Try mapping keys too?
                      if not s:
                          for k, v in COUNTRY_NAME_MAP.items():
                              # If user typed "The Netherlands", norm is "netherlands"
@@ -673,10 +672,25 @@ def calculate_draft_totals(client):
                                  mapped_val = v
                                  s = c_stats.get(mapped_val)
                                  if s: break
+                                 
+                     # Reverse Mapping (Value -> Key)
+                     # User has "Republic of Korea" (Value in Map), Scraper has "South Korea" (Key in Map).
+                     if not s:
+                         for k, v in COUNTRY_NAME_MAP.items():
+                             # Check exact or fuzzy match of Value
+                             if v == c or normalize_country_name(v) == c_norm:
+                                 # Found match. Scraper Key is k.
+                                 s = c_stats.get(k)
+                                 if s: break
 
             # Try AIN mapping
             if not s and "individual" in c.lower(): s = c_stats.get("AIN") or c_stats.get("Individual Neutral Athletes")
             if not s and c == "AIN": s = c_stats.get("Individual Neutral Athletes")
+            
+            # DEBUG LOGGING for User Issues
+            if any(target in c for target in ["Finland", "Korea", "Netherlands"]):
+                found_status = "FOUND" if s else "MISSING"
+                print(f"DRAFT DEBUG: Country '{c}' -> {found_status} (Stats: {s})")
             
             if s:
                 tot_w += s['w']
