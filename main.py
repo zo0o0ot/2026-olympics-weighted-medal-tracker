@@ -267,25 +267,28 @@ def update_results_tab(client, medal_counts):
         return
 
     # Prepare batch update
+    matched_scraped_keys = set()
+    
     for i, row in enumerate(data[1:], start=2):
         c_name = row[col_c]
         if not c_name: continue
         
         # Lookup Logic:
+        metrics = None
+        matched_key = None
+        
         # 1. Direct match
-        # 2. Reverse Map (Sheet Name -> Scraped Name)
-        # 3. Known Mappings (Scraped Name -> Sheet Name)
-        # 4. Canonical transformations?
-        
-        metrics = medal_counts.get(c_name)
-        
+        if c_name in medal_counts:
+            metrics = medal_counts[c_name]
+            matched_key = c_name
+
         if not metrics:
             # 2. Try Fuzzy Match against Medal Counts (Scraped Data)
-            #    (Sheet: "The Netherlands", Scraped: "Netherlands") -> Match!
             c_norm = normalize_country_name(c_name)
             for k, v in medal_counts.items():
                 if normalize_country_name(k) == c_norm:
                     metrics = v
+                    matched_key = k
                     break
             
             # 3. Try Mapping (Reverse Lookup)
@@ -294,12 +297,14 @@ def update_results_tab(client, medal_counts):
                      # Check exact or fuzzy match of Sheet Name
                      if sheet_name == c_name or normalize_country_name(sheet_name) == c_norm:
                         metrics = medal_counts.get(scraped_name)
+                        matched_key = scraped_name
                         # If map key isn't exactly in medal_counts, try fuzzy match there too
                         if not metrics:
                              s_norm = normalize_country_name(scraped_name)
                              for mk, mv in medal_counts.items():
                                  if normalize_country_name(mk) == s_norm:
                                      metrics = mv
+                                     matched_key = mk
                                      break
                         if metrics: break
             
@@ -308,6 +313,7 @@ def update_results_tab(client, medal_counts):
                  for k, v in name_map.items():
                     if v == c_name: 
                         metrics = medal_counts.get(k)
+                        matched_key = k
                         if metrics: break
             
             # DEBUG LOGGING for Results Tab
@@ -316,6 +322,8 @@ def update_results_tab(client, medal_counts):
                 print(f"RESULTS DEBUG: Sheet Row '{c_name}' -> {match_status}")
 
         if metrics:
+            if matched_key: matched_scraped_keys.add(matched_key)
+            
             updates.append({'range': gspread.utils.rowcol_to_a1(i, col_c+1), 'values': [[c_name]]}) # Rewrite name to be safe? No.
             # col_g is 0-indexed. rowcol_to_a1 needs 1-indexed.
             updates.append({'range': gspread.utils.rowcol_to_a1(i, col_g+1), 'values': [[metrics['Gold']]]})
@@ -327,6 +335,49 @@ def update_results_tab(client, medal_counts):
         ws.batch_update(updates)
     else:
         print("No match found for any country in Results tab.")
+
+    # --- Auto-Append Missing Countries ---
+    all_scraped_keys = set(medal_counts.keys())
+    missing_keys = all_scraped_keys - matched_scraped_keys
+    
+    if missing_keys:
+        print(f"Found {len(missing_keys)} countries in scraper but NOT in sheet. Appending...")
+        new_rows = []
+        for k in missing_keys:
+            # Check if likely irrelevant (optional, but good for safety)
+            # if medal_counts[k]['Gold'] == 0 ...? No, we want all medal winners.
+            
+            data = medal_counts[k]
+            # Row Format: [Country, Gold, Silver, Bronze, Weight(1)...]
+            # We need to respect column order.
+            # We know indices: col_c, col_g, col_s, col_b.
+            # We assume they are roughly 0, 1, 2, 3.
+            # But let's construct a row distinct by max index.
+            
+            max_idx = max(col_c, col_g, col_s, col_b)
+            row_vals = [''] * (max_idx + 1)
+            
+            row_vals[col_c] = k
+            row_vals[col_g] = data['Gold']
+            row_vals[col_s] = data['Silver']
+            row_vals[col_b] = data['Bronze']
+            
+            # Optional: Add Weight=1 if column exists?
+            # Let's check header for 'Weight' or 'Multiplier'
+            try:
+                col_w = header.index('Multiplier')
+                if col_w > max_idx:
+                    row_vals.extend([''] * (col_w - max_idx))
+                row_vals[col_w] = 1
+            except ValueError:
+                pass # No multiplier column found
+                
+            new_rows.append(row_vals)
+            print(f"  -> Appending {k}: {data}")
+
+        if new_rows:
+            ws.append_rows(new_rows)
+            print("Appended missing countries.")
 
 def update_flavor_tab(client, details, team_map):
     """
