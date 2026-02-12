@@ -74,7 +74,40 @@ def scrape_medal_counts():
             medal_data[country_name] = {'Gold': gold, 'Silver': silver, 'Bronze': bronze}
         except (ValueError, IndexError):
             continue
+            
+    # SAVE RAW DATA
+    try:
+        with open('scraped_medals.json', 'w') as f:
+            json.dump(medal_data, f, indent=2)
+        print("Saved raw medal counts to scraped_medals.json")
+    except Exception as e:
+        print(f"Warning: Could not save JSON: {e}")
+        
     return medal_data
+
+def validate_data(data, data_type="counts"):
+    """
+    Validates scraped data to ensure no garbage (numeric keys, 'totals', etc.)
+    Returns (bool, message)
+    """
+    if not data: return False, "No data found."
+    
+    if data_type == "counts":
+        # Data is dict: {Country: {Gold, ...}}
+        for country in data.keys():
+            if not country or len(country) < 2: return False, f"Invalid country name: '{country}'"
+            if country.isdigit(): return False, f"Numeric country name detected: '{country}'"
+            if "total" in country.lower(): return False, f"Total row detected as country: '{country}'"
+            if "rank" in country.lower(): return False, f"Rank header detected as country: '{country}'"
+            
+    elif data_type == "details":
+        # Data is list of dicts
+        for item in data:
+            c = item.get('Country', 'Unknown')
+            if not c or len(c) < 2: return False, f"Invalid country in details: '{c}'"
+            if c.isdigit(): return False, f"Numeric country in details: '{c}'"
+            
+    return True, "Validation Passed"
 
 def scrape_medal_details():
     """
@@ -224,6 +257,14 @@ def scrape_medal_details():
             except Exception:
                 continue
                 
+    # SAVE RAW DETAILS
+    try:
+        with open('scraped_details.json', 'w') as f:
+            json.dump(details, f, indent=2)
+        print("Saved raw medal details to scraped_details.json")
+    except Exception as e:
+        print(f"Warning: Could not save JSON: {e}")
+        
     return details
 
 # --- Mappings ---
@@ -782,23 +823,30 @@ def main():
     try:
         client = get_google_sheet_client()
         
-        # 1. Scrape Counts & Update Results
+        # 1. Scrape Counts & Validate
         counts = scrape_medal_counts()
-        if counts:
+        is_valid_c, msg_c = validate_data(counts, "counts")
+        
+        if is_valid_c:
             update_results_tab(client, counts)
         else:
-            print("No medal counts scraped.")
+            print(f"Validation FAILED for Counts ({msg_c}). Skipping Results update.")
 
         # 2. Update Draft Totals & Labels
         # Returns mapping needed for Flavor tab
         team_map = calculate_draft_totals(client)
         
-        # 3. Scrape Details & Update Flavor
+        # 3. Scrape Details & Validate
         if team_map:
             details = scrape_medal_details()
-            update_flavor_tab(client, details, team_map)
+            is_valid_d, msg_d = validate_data(details, "details")
             
-            # 4. Retroactive Repair (One-off/Ongoing safety)
+            if is_valid_d:
+                update_flavor_tab(client, details, team_map)
+            else:
+                 print(f"Validation FAILED for Details ({msg_d}). Skipping Flavor update.")
+            
+            # 4. Retroactive Repair (Run anyway to fix existing rows if map changed)
             repair_flavor_teams(client, team_map)
             
     except Exception as e:
