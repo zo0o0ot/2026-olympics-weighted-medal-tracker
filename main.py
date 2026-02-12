@@ -58,6 +58,14 @@ def scrape_medal_counts():
             # Remove (USA) suffix if widely used
             country_name = country_text.split('(')[0].replace('*', '').strip()
             
+            # Validation: Ignore garbage
+            if not country_name or country_name.isdigit() or len(country_name) < 2:
+                continue
+            if "total" in country_name.lower():
+                continue
+            if "rank" in country_name.lower():
+                continue
+            
             # Numbers are usually last 4 columns: G, S, B, Total
             bronze = int(cols[-2].get_text(strip=True))
             silver = int(cols[-3].get_text(strip=True))
@@ -345,7 +353,9 @@ def update_results_tab(client, medal_counts):
         new_rows = []
         for k in missing_keys:
             # Check if likely irrelevant (optional, but good for safety)
-            # if medal_counts[k]['Gold'] == 0 ...? No, we want all medal winners.
+            # Extra Safety:
+            if not k or k.isdigit() or len(k) < 2: continue
+            if "Total" in k or "Rank" in k: continue
             
             data = medal_counts[k]
             # Row Format: [Country, Gold, Silver, Bronze, Weight(1)...]
@@ -368,9 +378,13 @@ def update_results_tab(client, medal_counts):
                 col_w = header.index('Multiplier')
                 if col_w > max_idx:
                     row_vals.extend([''] * (col_w - max_idx))
+                    # Resize if we extended
+                    max_idx = len(row_vals) - 1
                 row_vals[col_w] = 1
             except ValueError:
-                pass # No multiplier column found
+                # If 'Multiplier' header not found, maybe append 1 at the end?
+                # Risky if cols are fixed. Better to just add country.
+                pass 
                 
             new_rows.append(row_vals)
             print(f"  -> Appending {k}: {data}")
