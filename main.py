@@ -165,12 +165,14 @@ def scrape_medal_details():
             row_text = row.get_text(strip=True).lower()
             if "gold" in row_text and "silver" in row_text:
                 continue
-                
             if len(cols) < 4: continue 
             
             try:
                 # Column 0: Event
                 # Problem: "Downhilldetails" -> The 'details' text is likely a hidden span or link.
+        
+    # 2. Process Draft Picks
+    # ...           # Problem: "Downhilldetails" -> The 'details' text is likely a hidden span or link.
                 # Solution: Get text, but exclude 'details' if it's a UI element.
                 # Better: Extract text node only? Or replace 'details' if safe.
                 event_cell = cols[0]
@@ -755,22 +757,42 @@ def calculate_draft_totals(client):
         idx_g = r_header.index('Gold')
         idx_s = r_header.index('Silver')
         idx_b = r_header.index('Bronze')
-        idx_m = r_header.index('Multiplier')
-    except:
+    except ValueError as e:
+        print(f"Error reading Results headers: {e}")
         return
+
+    # Multiplier might be missing
+    idx_m = -1
+    if 'Multiplier' in r_header:
+        idx_m = r_header.index('Multiplier')
+    else:
+        print("Warning: 'Multiplier' column not found in Results tab. Defaulting to 1.0")
 
     c_stats = {}
     for row in r_data[1:]:
+        if len(row) <= idx_c: continue
         c = row[idx_c]
         if not c: continue
-        g = int(row[idx_g] or 0)
-        s = int(row[idx_s] or 0)
-        b = int(row[idx_b] or 0)
-        m = float((row[idx_m] or '1').replace(',', '.'))
         
+        # Safely get medals
+        try:
+            g = int(row[idx_g]) if len(row) > idx_g and row[idx_g] else 0
+            s = int(row[idx_s]) if len(row) > idx_s and row[idx_s] else 0
+            b = int(row[idx_b]) if len(row) > idx_b and row[idx_b] else 0
+            
+            m = 1.0
+            if idx_m != -1 and len(row) > idx_m:
+                 val = row[idx_m].replace(',', '.')
+                 if val and val.replace('.','',1).isdigit():
+                     m = float(val)
+        except ValueError:
+            g, s, b, m = 0, 0, 0, 1.0
+            
         w = g*3 + s*2 + b*1
         mult = w * m
-        c_stats[c] = {'w': w, 'm': mult}
+        c_stats[c] = {'w': w, 'm': mult, 'raw_m': m}
+        
+    print(f"Loaded stats for {len(c_stats)} countries from Results tab.")
 
     # 2. Read Draft Teams
     # Dynamic read instead of fixed range
@@ -846,10 +868,8 @@ def calculate_draft_totals(client):
                              # If user typed "The Netherlands", norm is "netherlands"
                              # Map key might be "Netherlands", value "Netherlands"
                              if normalize_country_name(k) == c_norm:
-                                 # Found map key. Now get stats for value?
-                                 mapped_val = v
-                                 s = c_stats.get(mapped_val)
-                                 if s: break
+                                 s = c_stats.get(v)
+                                 break
                                  
                      # Reverse Mapping (Value -> Key)
                      # User has "Republic of Korea" (Value in Map), Scraper has "South Korea" (Key in Map).
