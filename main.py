@@ -69,13 +69,21 @@ def scrape_medal_counts():
             # Remove (USA) suffix if widely used
             country_name = country_text.split('(')[0].replace('*', '').strip()
             
+            # DEBUG LOG
+            # print(f"DEBUG ROW: {country_name} (Cols: {len(cols)})")
+
             # Validation: Ignore garbage
             if not country_name or country_name.isdigit() or len(country_name) < 2:
+                # print(f"  -> SKIPPING garbage: '{country_name}'")
                 continue
             if "total" in country_name.lower():
                 continue
             if "rank" in country_name.lower():
                 continue
+            
+            # Specific Debug for Missing Countries
+            if any(t in country_name for t in ["Britain", "Australia", "China", "Finland"]):
+                print(f"DEBUG SCRAPER: Found target '{country_name}'")
             
             # Numbers are usually last 4 columns: G, S, B, Total
             bronze = int(cols[-2].get_text(strip=True))
@@ -343,7 +351,9 @@ COUNTRY_NAME_MAP = {
     "ROC": "Russian Olympic Committee",
     "Czech Republic": "Czechia",
     "Netherlands": "Netherlands", # Explicit map just in case
-    "The Netherlands": "Netherlands"
+    "The Netherlands": "Netherlands",
+    "PR China": "People's Republic of China",
+    "China": "People's Republic of China"
 }
 
 def normalize_country_name(name):
@@ -433,8 +443,8 @@ def update_results_tab(client, medal_counts):
                         if metrics: break
             
             # DEBUG LOGGING for Results Tab
-            if any(t in c_name for t in ["Finland", "Korea", "Netherlands"]):
-                match_status = f"MATCHED (Data: {metrics})" if metrics else "NO MATCH"
+            if any(t in c_name for t in ["Finland", "Korea", "Netherlands", "China", "Britain", "Australia"]):
+                match_status = f"MATCHED with '{matched_key}'" if metrics else "NO MATCH"
                 print(f"RESULTS DEBUG: Sheet Row '{c_name}' -> {match_status}")
 
         if metrics:
