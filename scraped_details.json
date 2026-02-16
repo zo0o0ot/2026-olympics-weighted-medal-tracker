@@ -36,6 +36,24 @@
     "Country": "Switzerland"
   },
   {
+    "Event": "Giant slalom",
+    "Medal": "Gold",
+    "Athlete": "Lucas Pinheiro Braathen",
+    "Country": "Brazil"
+  },
+  {
+    "Event": "Giant slalom",
+    "Medal": "Silver",
+    "Athlete": "Marco Odermatt",
+    "Country": "Switzerland"
+  },
+  {
+    "Event": "Giant slalom",
+    "Medal": "Bronze",
+    "Athlete": "Lo\u00efc Meillard",
+    "Country": "Switzerland"
+  },
+  {
     "Event": "Team combined",
     "Medal": "Gold",
     "Athlete": "Franjo von Allmen Tanguy Nef",
@@ -70,6 +88,42 @@
     "Medal": "Bronze",
     "Athlete": "Sofia Goggia",
     "Country": "Italy"
+  },
+  {
+    "Event": "Super-G",
+    "Medal": "Gold",
+    "Athlete": "Federica Brignone",
+    "Country": "Italy"
+  },
+  {
+    "Event": "Super-G",
+    "Medal": "Silver",
+    "Athlete": "Romane Miradoli",
+    "Country": "France"
+  },
+  {
+    "Event": "Super-G",
+    "Medal": "Bronze",
+    "Athlete": "Cornelia H\u00fctter",
+    "Country": "Austria"
+  },
+  {
+    "Event": "Giant slalom",
+    "Medal": "Gold",
+    "Athlete": "Federica Brignone",
+    "Country": "Italy"
+  },
+  {
+    "Event": "Giant slalom",
+    "Medal": "Silver",
+    "Athlete": "Thea Louise Stjernesund  Sara Hector Sweden",
+    "Country": "Norway"
+  },
+  {
+    "Event": "Giant slalom",
+    "Medal": "Bronze",
+    "Athlete": "Not awarded",
+    "Country": "Unknown"
   },
   {
     "Event": "Team combined",
@@ -108,6 +162,42 @@
     "Country": "Norway"
   },
   {
+    "Event": "Sprint",
+    "Medal": "Gold",
+    "Athlete": "Quentin Fillon Maillet",
+    "Country": "France"
+  },
+  {
+    "Event": "Sprint",
+    "Medal": "Silver",
+    "Athlete": "Vetle Sj\u00e5stad Christiansen",
+    "Country": "Norway"
+  },
+  {
+    "Event": "Sprint",
+    "Medal": "Bronze",
+    "Athlete": "Sturla Holm L\u00e6greid",
+    "Country": "Norway"
+  },
+  {
+    "Event": "Pursuit",
+    "Medal": "Gold",
+    "Athlete": "Martin Ponsiluoma",
+    "Country": "Sweden"
+  },
+  {
+    "Event": "Pursuit",
+    "Medal": "Silver",
+    "Athlete": "Sturla Holm L\u00e6greid",
+    "Country": "Norway"
+  },
+  {
+    "Event": "Pursuit",
+    "Medal": "Bronze",
+    "Athlete": "\u00c9milien Jacquelin",
+    "Country": "France"
+  },
+  {
     "Event": "Individual",
     "Medal": "Gold",
     "Athlete": "Julia Simon",
@@ -124,6 +214,42 @@
     "Medal": "Bronze",
     "Athlete": "Lora Hristova",
     "Country": "Bulgaria"
+  },
+  {
+    "Event": "Sprint",
+    "Medal": "Gold",
+    "Athlete": "Maren Kirkeeide",
+    "Country": "Norway"
+  },
+  {
+    "Event": "Sprint",
+    "Medal": "Silver",
+    "Athlete": "Oc\u00e9ane Michelon",
+    "Country": "France"
+  },
+  {
+    "Event": "Sprint",
+    "Medal": "Bronze",
+    "Athlete": "Lou Jeanmonnot",
+    "Country": "France"
+  },
+  {
+    "Event": "Pursuit",
+    "Medal": "Gold",
+    "Athlete": "Lisa Vittozzi",
+    "Country": "Italy"
+  },
+  {
+    "Event": "Pursuit",
+    "Medal": "Silver",
+    "Athlete": "Maren Kirkeeide",
+    "Country": "Norway"
+  },
+  {
+    "Event": "Pursuit",
+    "Medal": "Bronze",
+    "Athlete": "Suvi Minkkinen",
+    "Country": "Finland"
   },
   {
     "Event": "Relay",
@@ -144,6 +270,24 @@
     "Country": "Germany"
   },
   {
+    "Event": "10 kilometre freestyle",
+    "Medal": "Gold",
+    "Athlete": "Johannes H\u00f8sflot Kl\u00e6bo",
+    "Country": "Norway"
+  },
+  {
+    "Event": "10 kilometre freestyle",
+    "Medal": "Silver",
+    "Athlete": "Mathis Desloges",
+    "Country": "France"
+  },
+  {
+    "Event": "10 kilometre freestyle",
+    "Medal": "Bronze",
+    "Athlete": "Einar Hedegart",
+    "Country": "Norway"
+  },
+  {
     "Event": "20 kilometre skiathlon",
     "Medal": "Gold",
     "Athlete": "Johannes H\u00f8sflot Kl\u00e6bo",
@@ -160,6 +304,24 @@
     "Medal": "Bronze",
     "Athlete": "Martin Nyenget",
     "Country": "Norway"
+  },
+  {
+    "Event": "4 \u00d7 7.5 kilometre relay",
+    "Medal": "Gold",
+    "Athlete": "Emil Iversen Martin L\u00f8wstr\u00f8m Nyenget Einar Hedegart Johannes H\u00f8sflot Kl\u00e6bo",
+    "Country": "Norway"
+  },
+  {
+    "Event": "4 \u00d7 7.5 kilometre relay",
+    "Medal": "Silver",
+    "Athlete": "Th\u00e9o Schely Hugo Lapalus Mathis Desloges Victor Lovera",
+    "Country": "France"
+  },
+  {
+    "Event": "4 \u00d7 7.5 kilometre relay",
+    "Medal": "Bronze",
+    "Athlete": "Davide Graz Elia Barp Martino Carollo Federico Pellegrino",
+    "Country": "Italy"
   },
   {
     "Event": "Sprint classical",
@@ -180,6 +342,24 @@
     "Country": "Norway"
   },
   {
+    "Event": "10 kilometre freestyle",
+    "Medal": "Gold",
+    "Athlete": "Frida Karlsson",
+    "Country": "Sweden"
+  },
+  {
+    "Event": "10 kilometre freestyle",
+    "Medal": "Silver",
+    "Athlete": "Ebba Andersson",
+    "Country": "Sweden"
+  },
+  {
+    "Event": "10 kilometre freestyle",
+    "Medal": "Bronze",
+    "Athlete": "Jessie Diggins",
+    "Country": "United States"
+  },
+  {
     "Event": "20 kilometre skiathlon",
     "Medal": "Gold",
     "Athlete": "Frida Karlsson",
@@ -196,6 +376,24 @@
     "Medal": "Bronze",
     "Athlete": "Heidi Weng",
     "Country": "Norway"
+  },
+  {
+    "Event": "4 \u00d7 7.5 kilometre relay",
+    "Medal": "Gold",
+    "Athlete": "Kristin Austgulen Fosn\u00e6s Astrid \u00d8yre Slind Karoline Simpson-Larsen Heidi Weng",
+    "Country": "Norway"
+  },
+  {
+    "Event": "4 \u00d7 7.5 kilometre relay",
+    "Medal": "Silver",
+    "Athlete": "Linn Svahn Ebba Andersson Frida Karlsson Jonna Sundling",
+    "Country": "Sweden"
+  },
+  {
+    "Event": "4 \u00d7 7.5 kilometre relay",
+    "Medal": "Bronze",
+    "Athlete": "Johanna Matintalo Kerttu Niskanen Vilma Ryytty Jasmi Joensuu",
+    "Country": "Finland"
   },
   {
     "Event": "Sprint classical",
@@ -234,6 +432,24 @@
     "Country": "Italy"
   },
   {
+    "Event": "Men's singles",
+    "Medal": "Gold",
+    "Athlete": "Mikhail Shaidorov",
+    "Country": "Kazakhstan"
+  },
+  {
+    "Event": "Men's singles",
+    "Medal": "Silver",
+    "Athlete": "Yuma Kagiyama",
+    "Country": "Japan"
+  },
+  {
+    "Event": "Men's singles",
+    "Medal": "Bronze",
+    "Athlete": "Shun Sato",
+    "Country": "Japan"
+  },
+  {
     "Event": "Ice dance",
     "Medal": "Gold",
     "Athlete": "Laurence Fournier Beaudry Guillaume Cizeron",
@@ -254,19 +470,19 @@
   {
     "Event": "Team event",
     "Medal": "Gold",
-    "Athlete": "Evan Bates Madison Chock Amber Glenn ** Ellie Kam Alysa Liu * Ilia Malinin Daniel O'Shea",
+    "Athlete": "Ilia Malinin Alysa Liu Amber Glenn Ellie Kam Daniel O'Shea Evan Bates Madison Chock",
     "Country": "United States"
   },
   {
     "Event": "Team event",
     "Medal": "Silver",
-    "Athlete": "Yuma Kagiyama * Ryuichi Kihara Riku Miura Masaya Morita Kaori Sakamoto Shun Sato ** Utana Yoshida",
+    "Athlete": "Yuma Kagiyama Shun Sato Kaori Sakamoto Ryuichi Kihara Riku Miura Masaya Morita Utana Yoshida",
     "Country": "Japan"
   },
   {
     "Event": "Team event",
     "Medal": "Bronze",
-    "Athlete": "Sara Conti Marco Fabbri Daniel Grassl * Charl\u00e8ne Guignard Lara Naki Gutmann Niccol\u00f2 Macii Matteo Rizzo **",
+    "Athlete": "Daniel Grassl Matteo Rizzo Lara Naki Gutmann Sara Conti Niccol\u00f2 Macii Charl\u00e8ne Guignard Marco Fabbri",
     "Country": "Italy"
   },
   {
@@ -286,6 +502,42 @@
     "Medal": "Bronze",
     "Athlete": "Luca Harrington",
     "Country": "New Zealand"
+  },
+  {
+    "Event": "Moguls",
+    "Medal": "Gold",
+    "Athlete": "Cooper Woods-Topalovic",
+    "Country": "Australia"
+  },
+  {
+    "Event": "Moguls",
+    "Medal": "Silver",
+    "Athlete": "Mika\u00ebl Kingsbury",
+    "Country": "Canada"
+  },
+  {
+    "Event": "Moguls",
+    "Medal": "Bronze",
+    "Athlete": "Ikuma Horishima",
+    "Country": "Japan"
+  },
+  {
+    "Event": "Dual moguls",
+    "Medal": "Gold",
+    "Athlete": "Mika\u00ebl Kingsbury",
+    "Country": "Canada"
+  },
+  {
+    "Event": "Dual moguls",
+    "Medal": "Silver",
+    "Athlete": "Ikuma Horishima",
+    "Country": "Japan"
+  },
+  {
+    "Event": "Dual moguls",
+    "Medal": "Bronze",
+    "Athlete": "Matt Graham",
+    "Country": "Australia"
   },
   {
     "Event": "Slopestyle",
@@ -322,6 +574,24 @@
     "Medal": "Bronze",
     "Athlete": "Perrine Laffont",
     "Country": "France"
+  },
+  {
+    "Event": "Dual moguls",
+    "Medal": "Gold",
+    "Athlete": "Jakara Anthony",
+    "Country": "Australia"
+  },
+  {
+    "Event": "Dual moguls",
+    "Medal": "Silver",
+    "Athlete": "Jaelin Kauf",
+    "Country": "United States"
+  },
+  {
+    "Event": "Dual moguls",
+    "Medal": "Bronze",
+    "Athlete": "Elizabeth Lemley",
+    "Country": "United States"
   },
   {
     "Event": "Men's singles",
@@ -396,6 +666,24 @@
     "Country": "Austria"
   },
   {
+    "Event": "Team relay",
+    "Medal": "Gold",
+    "Athlete": "Julia Taubitz Tobias Wendl Tobias Arlt Max Langenhan Dajana Eitberger Magdalena Matschina",
+    "Country": "Germany"
+  },
+  {
+    "Event": "Team relay",
+    "Medal": "Silver",
+    "Athlete": "Lisa Schulte Thomas Steu Wolfgang Kindl Jonas M\u00fcller Selina Egle Lara Kipp",
+    "Country": "Austria"
+  },
+  {
+    "Event": "Team relay",
+    "Medal": "Bronze",
+    "Athlete": "Verena Hofer Emanuel Rieder Simon Kainzwaldner Dominik Fischnaller Andrea V\u00f6tter Marion Oberhofer",
+    "Country": "Italy"
+  },
+  {
     "Event": "Individual normal hill/10\u00a0km",
     "Medal": "Gold",
     "Athlete": "Jens Lur\u00e5s Oftebro",
@@ -412,6 +700,60 @@
     "Medal": "Bronze",
     "Athlete": "Eero Hirvonen",
     "Country": "Finland"
+  },
+  {
+    "Event": "1000 metres",
+    "Medal": "Gold",
+    "Athlete": "Jens van 't Wout",
+    "Country": "Netherlands"
+  },
+  {
+    "Event": "1000 metres",
+    "Medal": "Silver",
+    "Athlete": "Sun Long",
+    "Country": "China"
+  },
+  {
+    "Event": "1000 metres",
+    "Medal": "Bronze",
+    "Athlete": "Rim Jong-un",
+    "Country": "South Korea"
+  },
+  {
+    "Event": "1500 metres",
+    "Medal": "Gold",
+    "Athlete": "Jens van 't Wout",
+    "Country": "Netherlands"
+  },
+  {
+    "Event": "1500 metres",
+    "Medal": "Silver",
+    "Athlete": "Hwang Dae-heon",
+    "Country": "South Korea"
+  },
+  {
+    "Event": "1500 metres",
+    "Medal": "Bronze",
+    "Athlete": "Roberts Kr\u016bzbergs",
+    "Country": "Latvia"
+  },
+  {
+    "Event": "500 metres",
+    "Medal": "Gold",
+    "Athlete": "Xandra Velzeboer",
+    "Country": "Netherlands"
+  },
+  {
+    "Event": "500 metres",
+    "Medal": "Silver",
+    "Athlete": "Arianna Fontana",
+    "Country": "Italy"
+  },
+  {
+    "Event": "500 metres",
+    "Medal": "Bronze",
+    "Athlete": "Courtney Sarault",
+    "Country": "Canada"
   },
   {
     "Event": "2000 metre relay",
@@ -432,6 +774,60 @@
     "Country": "Belgium"
   },
   {
+    "Event": "Men's",
+    "Medal": "Gold",
+    "Athlete": "Matt Weston",
+    "Country": "Great Britain"
+  },
+  {
+    "Event": "Men's",
+    "Medal": "Silver",
+    "Athlete": "Axel Jungk",
+    "Country": "Germany"
+  },
+  {
+    "Event": "Men's",
+    "Medal": "Bronze",
+    "Athlete": "Christopher Grotheer",
+    "Country": "Germany"
+  },
+  {
+    "Event": "Women's",
+    "Medal": "Gold",
+    "Athlete": "Janine Flock",
+    "Country": "Austria"
+  },
+  {
+    "Event": "Women's",
+    "Medal": "Silver",
+    "Athlete": "Susanne Kreher",
+    "Country": "Germany"
+  },
+  {
+    "Event": "Women's",
+    "Medal": "Bronze",
+    "Athlete": "Jacqueline Pfeifer",
+    "Country": "Germany"
+  },
+  {
+    "Event": "Mixed team",
+    "Medal": "Gold",
+    "Athlete": "Tabitha Stoecker Matt Weston",
+    "Country": "Great Britain"
+  },
+  {
+    "Event": "Mixed team",
+    "Medal": "Silver",
+    "Athlete": "Susanne Kreher Axel Jungk",
+    "Country": "Germany"
+  },
+  {
+    "Event": "Mixed team",
+    "Medal": "Bronze",
+    "Athlete": "Jacqueline Pfeifer Christopher Grotheer",
+    "Country": "Germany"
+  },
+  {
     "Event": "Men's normal hill individual",
     "Medal": "Gold",
     "Athlete": "Philipp Raimund",
@@ -450,6 +846,24 @@
     "Country": "Japan"
   },
   {
+    "Event": "Men's large hill individual",
+    "Medal": "Gold",
+    "Athlete": "Domen Prevc",
+    "Country": "Slovenia"
+  },
+  {
+    "Event": "Men's large hill individual",
+    "Medal": "Silver",
+    "Athlete": "Ren Nikaid\u014d",
+    "Country": "Japan"
+  },
+  {
+    "Event": "Men's large hill individual",
+    "Medal": "Bronze",
+    "Athlete": "Kacper Tomasiak",
+    "Country": "Poland"
+  },
+  {
     "Event": "Women's normal hill individual",
     "Medal": "Gold",
     "Athlete": "Anna Odine Str\u00f8m",
@@ -466,6 +880,24 @@
     "Medal": "Bronze",
     "Athlete": "Nozomi Maruyama",
     "Country": "Japan"
+  },
+  {
+    "Event": "Women's large hill individual",
+    "Medal": "Gold",
+    "Athlete": "Anna Odine Str\u00f8m",
+    "Country": "Norway"
+  },
+  {
+    "Event": "Women's large hill individual",
+    "Medal": "Silver",
+    "Athlete": "Eirin Maria Kvandal",
+    "Country": "Norway"
+  },
+  {
+    "Event": "Women's large hill individual",
+    "Medal": "Bronze",
+    "Athlete": "Nika Prevc",
+    "Country": "Slovenia"
   },
   {
     "Event": "Mixed normal hill team",
@@ -504,6 +936,24 @@
     "Country": "China"
   },
   {
+    "Event": "Halfpipe",
+    "Medal": "Gold",
+    "Athlete": "Y\u016bto Totsuka",
+    "Country": "Japan"
+  },
+  {
+    "Event": "Halfpipe",
+    "Medal": "Silver",
+    "Athlete": "Scotty James",
+    "Country": "Australia"
+  },
+  {
+    "Event": "Halfpipe",
+    "Medal": "Bronze",
+    "Athlete": "Ryusei Yamada",
+    "Country": "Japan"
+  },
+  {
     "Event": "Parallel giant slalom",
     "Medal": "Gold",
     "Athlete": "Benjamin Karl",
@@ -520,6 +970,24 @@
     "Medal": "Bronze",
     "Athlete": "Tervel Zamfirov",
     "Country": "Bulgaria"
+  },
+  {
+    "Event": "Snowboard cross",
+    "Medal": "Gold",
+    "Athlete": "Alessandro H\u00e4mmerle",
+    "Country": "Austria"
+  },
+  {
+    "Event": "Snowboard cross",
+    "Medal": "Silver",
+    "Athlete": "\u00c9liot Grondin",
+    "Country": "Canada"
+  },
+  {
+    "Event": "Snowboard cross",
+    "Medal": "Bronze",
+    "Athlete": "Jakob Dusek",
+    "Country": "Austria"
   },
   {
     "Event": "Big air",
@@ -540,6 +1008,24 @@
     "Country": "South Korea"
   },
   {
+    "Event": "Halfpipe",
+    "Medal": "Gold",
+    "Athlete": "Choi Ga-on",
+    "Country": "South Korea"
+  },
+  {
+    "Event": "Halfpipe",
+    "Medal": "Silver",
+    "Athlete": "Chloe Kim",
+    "Country": "United States"
+  },
+  {
+    "Event": "Halfpipe",
+    "Medal": "Bronze",
+    "Athlete": "Mitsuki Ono",
+    "Country": "Japan"
+  },
+  {
     "Event": "Parallel giant slalom",
     "Medal": "Gold",
     "Athlete": "Zuzana Mad\u011brov\u00e1",
@@ -556,6 +1042,60 @@
     "Medal": "Bronze",
     "Athlete": "Lucia Dalmasso",
     "Country": "Italy"
+  },
+  {
+    "Event": "Snowboard cross",
+    "Medal": "Gold",
+    "Athlete": "Josie Baff",
+    "Country": "Australia"
+  },
+  {
+    "Event": "Snowboard cross",
+    "Medal": "Silver",
+    "Athlete": "Eva Adamczykov\u00e1",
+    "Country": "Czech Republic"
+  },
+  {
+    "Event": "Snowboard cross",
+    "Medal": "Bronze",
+    "Athlete": "Michela Moioli",
+    "Country": "Italy"
+  },
+  {
+    "Event": "Team snowboard cross",
+    "Medal": "Gold",
+    "Athlete": "Huw Nightingale Charlotte Bankes",
+    "Country": "Great Britain"
+  },
+  {
+    "Event": "Team snowboard cross",
+    "Medal": "Silver",
+    "Athlete": "Lorenzo Sommariva Michela Moioli",
+    "Country": "Italy"
+  },
+  {
+    "Event": "Team snowboard cross",
+    "Medal": "Bronze",
+    "Athlete": "Loan Bozzolo L\u00e9a Casta",
+    "Country": "France"
+  },
+  {
+    "Event": "500 metres",
+    "Medal": "Gold",
+    "Athlete": "Jordan Stolz",
+    "Country": "United States"
+  },
+  {
+    "Event": "500 metres",
+    "Medal": "Silver",
+    "Athlete": "Jenning de Boo",
+    "Country": "Netherlands"
+  },
+  {
+    "Event": "500 metres",
+    "Medal": "Bronze",
+    "Athlete": "Laurent Dubreuil",
+    "Country": "Canada"
   },
   {
     "Event": "1000 metres",
@@ -594,6 +1134,42 @@
     "Country": "Italy"
   },
   {
+    "Event": "10,000 metres",
+    "Medal": "Gold",
+    "Athlete": "Metod\u011bj J\u00edlek",
+    "Country": "Czech Republic"
+  },
+  {
+    "Event": "10,000 metres",
+    "Medal": "Silver",
+    "Athlete": "Vladimir Semirunniy",
+    "Country": "Poland"
+  },
+  {
+    "Event": "10,000 metres",
+    "Medal": "Bronze",
+    "Athlete": "Jorrit Bergsma",
+    "Country": "Netherlands"
+  },
+  {
+    "Event": "500 metres",
+    "Medal": "Gold",
+    "Athlete": "Femke Kok",
+    "Country": "Netherlands"
+  },
+  {
+    "Event": "500 metres",
+    "Medal": "Silver",
+    "Athlete": "Jutta Leerdam",
+    "Country": "Netherlands"
+  },
+  {
+    "Event": "500 metres",
+    "Medal": "Bronze",
+    "Athlete": "Miho Takagi",
+    "Country": "Japan"
+  },
+  {
     "Event": "1000 metres",
     "Medal": "Gold",
     "Athlete": "Jutta Leerdam",
@@ -628,5 +1204,23 @@
     "Medal": "Bronze",
     "Athlete": "Val\u00e9rie Maltais",
     "Country": "Canada"
+  },
+  {
+    "Event": "5000 metres",
+    "Medal": "Gold",
+    "Athlete": "Francesca Lollobrigida",
+    "Country": "Italy"
+  },
+  {
+    "Event": "5000 metres",
+    "Medal": "Silver",
+    "Athlete": "Merel Conijn",
+    "Country": "Netherlands"
+  },
+  {
+    "Event": "5000 metres",
+    "Medal": "Bronze",
+    "Athlete": "Ragne Wiklund",
+    "Country": "Norway"
   }
 ]
