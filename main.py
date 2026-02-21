@@ -741,6 +741,7 @@ def repair_flavor_teams(client, team_map):
             print(f"Repairing Row {i}: {c_name} -> {owner_team} (Was: '{current_team}')")
             # Convert to A1 notation for update
             # col_team is 0-indexed. gspread is 1-indexed.
+            import gspread
             col_letter = gspread.utils.rowcol_to_a1(1, col_team + 1)[0]
             cell_range = f"{col_letter}{i}"
             updates.append({'range': cell_range, 'values': [[owner_team]]})
