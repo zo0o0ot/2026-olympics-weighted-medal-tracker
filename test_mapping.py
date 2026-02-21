@@ -10,7 +10,8 @@ test_cases = [
     ("United States", "USA", True), # Via Map
     ("The United States", "USA", True), # Via Map + Norm?
     ("China", "People's Republic of China", True),
-    ("Czech Republic", "Czechia", True)
+    ("Czech Republic", "Czechia", True),
+    ("Individual Neutral Athletes", "AIN", True)
 ]
 
 print("--- Testing Normalization & Mapping (Production Logic) ---")

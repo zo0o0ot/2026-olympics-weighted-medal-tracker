@@ -66,8 +66,8 @@ def scrape_medal_counts():
 
             country_text = get_text(country_col_idx)
             
-            # Remove (USA) suffix if widely used
-            country_name = country_text.split('(')[0].replace('*', '').strip()
+            # Remove (USA) suffix if widely used, and [A] Wikipedia citations
+            country_name = country_text.split('(')[0].split('[')[0].replace('*', '').strip()
             
             # DEBUG LOG
             # print(f"DEBUG ROW: {country_name} (Cols: {len(cols)})")
@@ -353,7 +353,7 @@ COUNTRY_NAME_MAP = {
     "Netherlands": "Netherlands", # Explicit map just in case
     "The Netherlands": "Netherlands",
     "PR China": "People's Republic of China",
-    "China": "People's Republic of China"
+    "Individual Neutral Athletes": "AIN"
 }
 
 def normalize_country_name(name):
