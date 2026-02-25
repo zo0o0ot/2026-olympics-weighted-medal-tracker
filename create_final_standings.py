@@ -88,18 +88,27 @@ def run_consolidation():
     print(f"Found {len(weighted_history)} Weighted Total snapshots.")
     print(f"Found {len(multiplied_history)} Multiplied Total snapshots.")
     
+    # Prepend an 'Update #' column for the X-Axis in charts
+    chart_headers = ["Update #"] + players
+    
+    # Add index to each history row
+    w_updates = [chart_headers]
+    for idx, row in enumerate(weighted_history):
+        w_updates.append([idx + 1] + row)
+        
+    m_updates = [chart_headers]
+    for idx, row in enumerate(multiplied_history):
+        m_updates.append([idx + 1] + row)
+    
     # Write to Weighted Totals map
-    # Structure: Header (Players), then each row is a point in time
     print(f"Pushing updates to {WEIGHTED_TAB_NAME} tab...")
-    w_updates = [players] + weighted_history
     w_ws.update('A1', w_updates)
-    w_ws.format('A1:D1', {'textFormat': {'bold': True}})
+    w_ws.format('A1:E1', {'textFormat': {'bold': True}})
     
     # Write to Multiplied Totals map
     print(f"Pushing updates to {MULTIPLIED_TAB_NAME} tab...")
-    m_updates = [players] + multiplied_history
     m_ws.update('A1', m_updates)
-    m_ws.format('A1:D1', {'textFormat': {'bold': True}})
+    m_ws.format('A1:E1', {'textFormat': {'bold': True}})
     
     print("Done! View the new tabs on Google Sheets to build your Google Charts!")
 
