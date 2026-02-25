@@ -1,11 +1,11 @@
 name: Olympic Medal Updater
 
 on:
-  schedule:
-    # 8:00 AM CST = 14:00 UTC
-    # 8:00 PM CST = 02:00 UTC (Next Day)
-    - cron: '0 14 * * *'
-    - cron: '0 2 * * *'
+  # schedule:
+  #   # 8:00 AM CST = 14:00 UTC
+  #   # 8:00 PM CST = 02:00 UTC (Next Day)
+  #   - cron: '0 14 * * *'
+  #   - cron: '0 2 * * *'
   workflow_dispatch: # Allows manual trigger from Actions tab
 
 jobs:
