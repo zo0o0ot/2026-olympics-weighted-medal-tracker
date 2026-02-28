@@ -355,6 +355,12 @@ def get_hardware_multiplier(event_name, athlete_str=""):
     if "four-man" in name or "4 x" in name or "4 ×" in name:
         return 4
         
+    if "metre relay" in name: # Short track relays (5000m, 3000m, 2000m)
+        return 5
+        
+    if "team relay" in name: # Luge relay has 6 players
+        return 6
+        
     if "relay" in name:
         return 4
         
@@ -409,7 +415,7 @@ def export_hardware_to_csv(hw_counts, filename="hardware_counts.csv"):
     """
     import csv
     print(f"Exporting hardware counts to {filename}...")
-    headers = ["Country", "HW Gold", "HW Silver", "HW Bronze", "Total HW"]
+    headers = ["Country", "HW Gold", "HW Silver", "HW Bronze", "Total HW", "Weighted HW"]
     rows = []
     
     for country, counts in hw_counts.items():
@@ -417,10 +423,11 @@ def export_hardware_to_csv(hw_counts, filename="hardware_counts.csv"):
         hw_s = counts.get('Silver', 0)
         hw_b = counts.get('Bronze', 0)
         tot = hw_g + hw_s + hw_b
-        rows.append([country, hw_g, hw_s, hw_b, tot])
+        weighted = (hw_g * 3) + (hw_s * 2) + (hw_b * 1)
+        rows.append([country, hw_g, hw_s, hw_b, tot, weighted])
         
-    # Sort by Total HW descending, then Gold descending
-    rows.sort(key=lambda x: (x[4], x[1]), reverse=True)
+    # Sort by Weighted HW descending, then Total HW descending, then Gold descending
+    rows.sort(key=lambda x: (x[5], x[4], x[1]), reverse=True)
     
     try:
         with open(filename, 'w', newline='', encoding='utf-8') as f:
