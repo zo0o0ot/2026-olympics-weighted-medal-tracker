@@ -403,6 +403,34 @@ def aggregate_hardware_counts(details):
         
     return hw_counts
 
+def export_hardware_to_csv(hw_counts, filename="hardware_counts.csv"):
+    """
+    Exports the aggregated hardware counts to a CSV file.
+    """
+    import csv
+    print(f"Exporting hardware counts to {filename}...")
+    headers = ["Country", "HW Gold", "HW Silver", "HW Bronze", "Total HW"]
+    rows = []
+    
+    for country, counts in hw_counts.items():
+        hw_g = counts.get('Gold', 0)
+        hw_s = counts.get('Silver', 0)
+        hw_b = counts.get('Bronze', 0)
+        tot = hw_g + hw_s + hw_b
+        rows.append([country, hw_g, hw_s, hw_b, tot])
+        
+    # Sort by Total HW descending, then Gold descending
+    rows.sort(key=lambda x: (x[4], x[1]), reverse=True)
+    
+    try:
+        with open(filename, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow(headers)
+            writer.writerows(rows)
+        print("Successfully exported hardware counts.")
+    except Exception as e:
+        print(f"Failed to export hardware counts: {e}")
+
 # --- Mappings ---
 COUNTRY_NAME_MAP = {
     "United States": "USA",
@@ -431,7 +459,7 @@ def normalize_country_name(name):
             name = name[len(prefix):]
     return name.strip()
 
-def update_results_tab(client, medal_counts, hardware_counts=None):
+def update_results_tab(client, medal_counts):
     sheet = client.open_by_key(SHEET_KEY)
     ws = sheet.worksheet(RESULTS_TAB_NAME)
     data = ws.get_all_values()
@@ -452,31 +480,6 @@ def update_results_tab(client, medal_counts, hardware_counts=None):
     except ValueError:
         print("Columns missing in Results tab.")
         return
-        
-    # HW Columns Logic
-    hw_cols = ['HW Gold', 'HW Silver', 'HW Bronze', 'Total HW']
-    hw_indices = []
-    need_hw_headers = False
-    
-    for col in hw_cols:
-        try:
-            hw_indices.append(header.index(col))
-        except ValueError:
-            need_hw_headers = True
-            
-    if need_hw_headers:
-        print("Adding HW columns to Results header...")
-        start_col = len(header) + 1
-        end_col = len(header) + len(hw_cols)
-        import gspread
-        col_letter_start = gspread.utils.rowcol_to_a1(1, start_col)[0]
-        col_letter_end = gspread.utils.rowcol_to_a1(1, end_col)[0]
-        ws.update(f"{col_letter_start}1:{col_letter_end}1", [hw_cols])
-        ws.format(f"{col_letter_start}1:{col_letter_end}1", {'textFormat': {'bold': True}})
-        
-        for col in hw_cols:
-            header.append(col)
-            hw_indices.append(header.index(col))
 
     # Prepare batch update
     matched_scraped_keys = set()
@@ -541,25 +544,6 @@ def update_results_tab(client, medal_counts, hardware_counts=None):
             updates.append({'range': gspread.utils.rowcol_to_a1(i, col_g+1), 'values': [[metrics['Gold']]]})
             updates.append({'range': gspread.utils.rowcol_to_a1(i, col_s+1), 'values': [[metrics['Silver']]]})
             updates.append({'range': gspread.utils.rowcol_to_a1(i, col_b+1), 'values': [[metrics['Bronze']]]})
-            
-            # --- Hardware Updates ---
-            if hardware_counts:
-                hw = hardware_counts.get(matched_key)
-                # Fuzzy fallback if exact missing
-                if not hw:
-                    m_norm = normalize_country_name(matched_key)
-                    for hw_k, hw_v in hardware_counts.items():
-                        if normalize_country_name(hw_k) == m_norm:
-                            hw = hw_v
-                            break
-                            
-                if hw:
-                    hw_g_idx, hw_s_idx, hw_b_idx, hw_t_idx = hw_indices
-                    hw_tot = hw['Gold'] + hw['Silver'] + hw['Bronze']
-                    updates.append({'range': gspread.utils.rowcol_to_a1(i, hw_g_idx+1), 'values': [[hw['Gold']]]})
-                    updates.append({'range': gspread.utils.rowcol_to_a1(i, hw_s_idx+1), 'values': [[hw['Silver']]]})
-                    updates.append({'range': gspread.utils.rowcol_to_a1(i, hw_b_idx+1), 'values': [[hw['Bronze']]]})
-                    updates.append({'range': gspread.utils.rowcol_to_a1(i, hw_t_idx+1), 'values': [[hw_tot]]})
 
     if updates:
         print(f"Updating {len(updates)} cells in Results...")
@@ -883,11 +867,6 @@ def calculate_draft_totals(client):
         idx_m = r_header.index('Multiplier')
     else:
         print("Warning: 'Multiplier' column not found in Results tab. Defaulting to 1.0")
-        
-    # HW might be missing
-    idx_hw = -1
-    if 'Total HW' in r_header:
-        idx_hw = r_header.index('Total HW')
 
     c_stats = {}
     for row in r_data[1:]:
@@ -906,18 +885,12 @@ def calculate_draft_totals(client):
                  val = row[idx_m].replace(',', '.')
                  if val and val.replace('.','',1).isdigit():
                      m = float(val)
-                     
-            hw = 0
-            if idx_hw != -1 and len(row) > idx_hw:
-                 val = row[idx_hw].replace(',', '.')
-                 if val and val.replace('.','',1).isdigit():
-                     hw = int(float(val))
         except ValueError:
-            g, s, b, m, hw = 0, 0, 0, 1.0, 0
+            g, s, b, m = 0, 0, 0, 1.0
             
         w = g*3 + s*2 + b*1
         mult = w * m
-        c_stats[c] = {'w': w, 'm': mult, 'raw_m': m, 'hw': hw}
+        c_stats[c] = {'w': w, 'm': mult, 'raw_m': m}
         
     print(f"Loaded stats for {len(c_stats)} countries from Results tab.")
 
@@ -959,12 +932,10 @@ def calculate_draft_totals(client):
     # Row 2: Multiplied Total
     row_w_idx = total_row_idx
     row_m_idx = total_row_idx + 1
-    row_hw_idx = total_row_idx + 2
     
     # Labels
     updates.append({'range': f'E{row_w_idx}', 'values': [['Total Medals (Weighted)']]})
     updates.append({'range': f'E{row_m_idx}', 'values': [['Multiplied Total']]})
-    updates.append({'range': f'E{row_hw_idx}', 'values': [['Hardware Total']]})
 
     # Calculate Totals
     team_map_result = {} # For Flavor tab use: {TeamName: [Countries]}
@@ -974,7 +945,6 @@ def calculate_draft_totals(client):
         
         tot_w = 0
         tot_m = 0
-        tot_hw = 0
         for c in t_data['countries']:
             # safe lookup
             s = c_stats.get(c)
@@ -1023,7 +993,6 @@ def calculate_draft_totals(client):
             if s:
                 tot_w += s['w']
                 tot_m += s['m']
-                tot_hw += s.get('hw', 0)
         
         # Col letter
         # Col letter
@@ -1031,7 +1000,6 @@ def calculate_draft_totals(client):
         col_char = gspread.utils.rowcol_to_a1(1, col_i+1)[0]
         updates.append({'range': f"{col_char}{row_w_idx}", 'values': [[tot_w]]})
         updates.append({'range': f"{col_char}{row_m_idx}", 'values': [[tot_m]]})
-        updates.append({'range': f"{col_char}{row_hw_idx}", 'values': [[tot_hw]]})
 
     print(f"Updating Draft tab totals at Row {row_w_idx}...")
     draft_ws.batch_update(updates)
@@ -1045,22 +1013,24 @@ def main():
         # 0. Cleanup Garbage Rows (Automated Maintenance)
         cleanup_garbage_rows(client)
         
-        # 1. Scrape Details & Validate (Moved up to pass hardware counts to results)
+        # 1. Scrape Details & Validate Phase
+        # We run this early now to compute hardware explicitly for CSV export.
         details = scrape_medal_details()
         is_valid_d, msg_d = validate_data(details, "details")
-        hw_counts = {}
         if is_valid_d:
             hw_counts = aggregate_hardware_counts(details)
+            if hw_counts:
+                export_hardware_to_csv(hw_counts)
         else:
             details = []
-            print(f"Validation FAILED for Details ({msg_d}). Hardware counts will be empty.")
+            print(f"Validation FAILED for Details ({msg_d}). Hardware counts will skip.")
             
         # 2. Scrape Counts & Validate
         counts = scrape_medal_counts()
         is_valid_c, msg_c = validate_data(counts, "counts")
         
         if is_valid_c:
-            update_results_tab(client, counts, hw_counts)
+            update_results_tab(client, counts)
         else:
             print(f"Validation FAILED for Counts ({msg_c}). Skipping Results update.")
 
