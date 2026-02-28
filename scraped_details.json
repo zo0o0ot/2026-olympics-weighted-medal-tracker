@@ -324,6 +324,24 @@
     "Country": "Finland"
   },
   {
+    "Event": "Mass start",
+    "Medal": "Gold",
+    "Athlete": "Oc\u00e9ane Michelon",
+    "Country": "France"
+  },
+  {
+    "Event": "Mass start",
+    "Medal": "Silver",
+    "Athlete": "Julia Simon",
+    "Country": "France"
+  },
+  {
+    "Event": "Mass start",
+    "Medal": "Bronze",
+    "Athlete": "Tereza Voborn\u00edkov\u00e1",
+    "Country": "Czech Republic"
+  },
+  {
     "Event": "Relay",
     "Medal": "Gold",
     "Athlete": "Camille Bened Lou Jeanmonnot Oc\u00e9ane Michelon Julia Simon",
@@ -378,6 +396,24 @@
     "Country": "Germany"
   },
   {
+    "Event": "Four-man",
+    "Medal": "Gold",
+    "Athlete": "Johannes Lochner Thorsten Margis J\u00f6rn Wenzel Georg Fleischhauer",
+    "Country": "Germany"
+  },
+  {
+    "Event": "Four-man",
+    "Medal": "Silver",
+    "Athlete": "Francesco Friedrich Matthias Sommer Alexander Sch\u00fcller Felix Straub",
+    "Country": "Germany"
+  },
+  {
+    "Event": "Four-man",
+    "Medal": "Bronze",
+    "Athlete": "Michael Vogt Andreas Haas Amadou David Ndiaye Mario Aeberhard",
+    "Country": "Switzerland"
+  },
+  {
     "Event": "Women's monobob",
     "Medal": "Gold",
     "Athlete": "Elana Meyers Taylor",
@@ -393,6 +429,24 @@
     "Event": "Women's monobob",
     "Medal": "Bronze",
     "Athlete": "Kaillie Humphries",
+    "Country": "United States"
+  },
+  {
+    "Event": "Two-woman",
+    "Medal": "Gold",
+    "Athlete": "Laura Nolte Deborah Levi",
+    "Country": "Germany"
+  },
+  {
+    "Event": "Two-woman",
+    "Medal": "Silver",
+    "Athlete": "Lisa Buckwitz Neele Schuten",
+    "Country": "Germany"
+  },
+  {
+    "Event": "Two-woman",
+    "Medal": "Bronze",
+    "Athlete": "Kaillie Humphries Jasmine Jones",
     "Country": "United States"
   },
   {
@@ -428,7 +482,25 @@
   {
     "Event": "20 kilometre skiathlon",
     "Medal": "Bronze",
-    "Athlete": "Martin Nyenget",
+    "Athlete": "Martin L\u00f8wstr\u00f8m Nyenget",
+    "Country": "Norway"
+  },
+  {
+    "Event": "50 kilometre classical",
+    "Medal": "Gold",
+    "Athlete": "Johannes H\u00f8sflot Kl\u00e6bo",
+    "Country": "Norway"
+  },
+  {
+    "Event": "50 kilometre classical",
+    "Medal": "Silver",
+    "Athlete": "Martin L\u00f8wstr\u00f8m Nyenget",
+    "Country": "Norway"
+  },
+  {
+    "Event": "50 kilometre classical",
+    "Medal": "Bronze",
+    "Athlete": "Emil Iversen",
     "Country": "Norway"
   },
   {
@@ -522,6 +594,24 @@
     "Country": "Norway"
   },
   {
+    "Event": "50 kilometre classical",
+    "Medal": "Gold",
+    "Athlete": "Ebba Andersson",
+    "Country": "Sweden"
+  },
+  {
+    "Event": "50 kilometre classical",
+    "Medal": "Silver",
+    "Athlete": "Heidi Weng",
+    "Country": "Norway"
+  },
+  {
+    "Event": "50 kilometre classical",
+    "Medal": "Bronze",
+    "Athlete": "Nadja K\u00e4lin",
+    "Country": "Switzerland"
+  },
+  {
     "Event": "4 \u00d7 7.5 kilometre relay",
     "Medal": "Gold",
     "Athlete": "Kristin Austgulen Fosn\u00e6s Astrid \u00d8yre Slind Karoline Simpson-Larsen Heidi Weng",
@@ -577,9 +667,39 @@
   },
   {
     "Event": "Men",
+    "Medal": "Gold",
+    "Athlete": "Brad Jacobs Marc Kennedy Brett Gallant Ben Hebert Tyler Tardi",
+    "Country": "Canada"
+  },
+  {
+    "Event": "Men",
+    "Medal": "Silver",
+    "Athlete": "Bruce Mouat Grant Hardie Bobby Lammie Hammy McMillan Jr. Kyle Waddell",
+    "Country": "Great Britain"
+  },
+  {
+    "Event": "Men",
     "Medal": "Bronze",
     "Athlete": "Beno\u00eet Schwarz-van Berkel Yannick Schwaller Sven Michel Pablo Lachat-Couchepin Kim Schwaller",
     "Country": "Switzerland"
+  },
+  {
+    "Event": "Women",
+    "Medal": "Gold",
+    "Athlete": "Anna Hasselborg Sara McManus Agnes Knochenhauer Sofia Scharback Johanna Heldin",
+    "Country": "Sweden"
+  },
+  {
+    "Event": "Women",
+    "Medal": "Silver",
+    "Athlete": "Alina P\u00e4tz Silvana Tirinzoni Carole Howald Selina Witschonke Stefanie Berset",
+    "Country": "Switzerland"
+  },
+  {
+    "Event": "Women",
+    "Medal": "Bronze",
+    "Athlete": "Rachel Homan Tracy Fleury Emma Miskew Sarah Wilkes Rachelle Brown",
+    "Country": "Canada"
   },
   {
     "Event": "Mixed doubles",
@@ -798,6 +918,24 @@
     "Country": "Australia"
   },
   {
+    "Event": "Ski cross",
+    "Medal": "Gold",
+    "Athlete": "Simone Deromedis",
+    "Country": "Italy"
+  },
+  {
+    "Event": "Ski cross",
+    "Medal": "Silver",
+    "Athlete": "Federico Tomasoni",
+    "Country": "Italy"
+  },
+  {
+    "Event": "Ski cross",
+    "Medal": "Bronze",
+    "Athlete": "Alex Fiva",
+    "Country": "Switzerland"
+  },
+  {
     "Event": "Aerials",
     "Medal": "Gold",
     "Athlete": "Xu Mengtao",
@@ -832,6 +970,24 @@
     "Medal": "Bronze",
     "Athlete": "Flora Tabanelli",
     "Country": "Italy"
+  },
+  {
+    "Event": "Halfpipe",
+    "Medal": "Gold",
+    "Athlete": "Eileen Gu",
+    "Country": "China"
+  },
+  {
+    "Event": "Halfpipe",
+    "Medal": "Silver",
+    "Athlete": "Li Fanghui",
+    "Country": "China"
+  },
+  {
+    "Event": "Halfpipe",
+    "Medal": "Bronze",
+    "Athlete": "Zoe Atkin",
+    "Country": "Great Britain"
   },
   {
     "Event": "Slopestyle",
@@ -904,6 +1060,42 @@
     "Medal": "Bronze",
     "Athlete": "Sandra N\u00e4slund",
     "Country": "Sweden"
+  },
+  {
+    "Event": "Team aerials",
+    "Medal": "Gold",
+    "Athlete": "Kaila Kuhn Connor Curran Christopher Lillis",
+    "Country": "United States"
+  },
+  {
+    "Event": "Team aerials",
+    "Medal": "Silver",
+    "Athlete": "Lina Kozomara Pirmin Werner No\u00e9 Roth",
+    "Country": "Switzerland"
+  },
+  {
+    "Event": "Team aerials",
+    "Medal": "Bronze",
+    "Athlete": "Xu Mengtao Wang Xindi Li Tianma",
+    "Country": "China"
+  },
+  {
+    "Event": "Men's tournament",
+    "Medal": "Gold",
+    "Athlete": "Jake Oettinger Connor Hellebuyck Charlie McAvoy Quinn Hughes Brady Tkachuk Jack Eichel Matthew Tkachuk Brock Faber Jaccob Slavin Matt Boldy Auston Matthews Jake Guentzel Zach Werenski Jake Sanderson Dylan Larkin Tage Thompson Jack Hughes Noah Hanifin JT Miller Vincent Trocheck Brock Nelson Clayton Keller Jeremy Swayman Jackson LaCombe Kyle Connor",
+    "Country": "United States"
+  },
+  {
+    "Event": "Men's tournament",
+    "Medal": "Silver",
+    "Athlete": "Logan Thompson Jordan Binnington Devon Toews Cale Makar Macklin Celebrini Nathan MacKinnon Connor McDavid Thomas Harley Colton Parayko Nick Suzuki Mark Stone Mitch Marner Travis Sanheim Drew Doughty Sam Bennett Tom Wilson Brad Marchand Shea Theodore Bo Horvat Seth Jarvis Brandon Hagel Sam Reinhart Darcy Kuemper Josh Morrissey Sidney Crosby",
+    "Country": "Canada"
+  },
+  {
+    "Event": "Men's tournament",
+    "Medal": "Bronze",
+    "Athlete": "Sebastian Aho Joel Armia Mikael Granlund Miro Heiskanen Roope Hintz Erik Haula Henri Jokiharju Kaapo Kakko Oliver Kapanen Joel Kiviranta Joonas Korpisalo Kevin Lankinen Artturi Lehkonen Mikko Lehtonen Esa Lindell Anton Lundell Eetu Luostarinen Olli M\u00e4\u00e4tt\u00e4 Nikolas Matinpalo Niko Mikkola Mikko Rantanen Rasmus Ristolainen Juuse Saros Teuvo Ter\u00e4v\u00e4inen Eeli Tolvanen",
+    "Country": "Finland"
   },
   {
     "Event": "Women's tournament",
@@ -1428,6 +1620,24 @@
     "Country": "Spain"
   },
   {
+    "Event": "Mixed relay",
+    "Medal": "Gold",
+    "Athlete": "Emily Harrop Thibault Anselmet",
+    "Country": "France"
+  },
+  {
+    "Event": "Mixed relay",
+    "Medal": "Silver",
+    "Athlete": "Marianne Fatton Jon Kistler",
+    "Country": "Switzerland"
+  },
+  {
+    "Event": "Mixed relay",
+    "Medal": "Bronze",
+    "Athlete": "Ana Alonso Oriol Cardona",
+    "Country": "Spain"
+  },
+  {
     "Event": "Big air",
     "Medal": "Gold",
     "Athlete": "Kira Kimura",
@@ -1716,6 +1926,24 @@
     "Country": "Netherlands"
   },
   {
+    "Event": "Mass start",
+    "Medal": "Gold",
+    "Athlete": "Jorrit Bergsma",
+    "Country": "Netherlands"
+  },
+  {
+    "Event": "Mass start",
+    "Medal": "Silver",
+    "Athlete": "Viktor Hald Thorup",
+    "Country": "Denmark"
+  },
+  {
+    "Event": "Mass start",
+    "Medal": "Bronze",
+    "Athlete": "Andrea Giovannini",
+    "Country": "Italy"
+  },
+  {
     "Event": "Team pursuit",
     "Medal": "Gold",
     "Athlete": "Davide Ghiotto Andrea Giovannini Michele Malfatti",
@@ -1824,6 +2052,24 @@
     "Country": "Norway"
   },
   {
+    "Event": "Mass start",
+    "Medal": "Gold",
+    "Athlete": "Marijke Groenewoud",
+    "Country": "Netherlands"
+  },
+  {
+    "Event": "Mass start",
+    "Medal": "Silver",
+    "Athlete": "Ivanie Blondin",
+    "Country": "Canada"
+  },
+  {
+    "Event": "Mass start",
+    "Medal": "Bronze",
+    "Athlete": "Mia Manganello",
+    "Country": "United States"
+  },
+  {
     "Event": "Team pursuit",
     "Medal": "Gold",
     "Athlete": "Ivanie Blondin Val\u00e9rie Maltais Isabelle Weidemann",
@@ -1838,7 +2084,7 @@
   {
     "Event": "Team pursuit",
     "Medal": "Bronze",
-    "Athlete": "Hana Noake Ayano Sato Miho Takagi",
+    "Athlete": "Momoka Horikawa Hana Noake Ayano Sato Miho Takagi",
     "Country": "Japan"
   }
 ]
