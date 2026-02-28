@@ -8,6 +8,9 @@ on:
   #   - cron: '0 2 * * *'
   workflow_dispatch: # Allows manual trigger from Actions tab
 
+permissions:
+  contents: write
+
 jobs:
   update-medals:
     runs-on: ubuntu-latest
