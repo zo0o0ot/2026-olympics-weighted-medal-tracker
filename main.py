@@ -469,6 +469,13 @@ def export_hardware_to_csv(hw_counts, filename="hardware_counts.csv"):
         print(f"Failed to export hardware counts: {e}")
 
 # --- Mappings ---
+DRAFTED_TEAMS = {
+    "Maya": ["Germany", "Austria", "France", "Switzerland", "Great Britain", "Estonia", "Greece"],
+    "Ross": ["Norway", "Sweden", "Japan", "China", "South Korea", "Czech Republic", "Spain"],
+    "Mom": ["Canada", "USA", "Italy", "Australia", "Finland", "AIN", "Denmark", "Individual Neutral Athletes"],
+    "Drew": ["Netherlands", "Poland", "New Zealand", "Slovenia", "Belgium", "Croatia", "Chinese Taipei"]
+}
+
 COUNTRY_NAME_MAP = {
     "United States": "USA",
     "South Korea": "Republic of Korea",
@@ -1043,6 +1050,94 @@ def calculate_draft_totals(client):
     
     return team_map_result
 
+def export_teams_to_csv(hw_counts):
+    """
+    Exports the aggregated hardware counts grouped by drafted teams to a CSV file.
+    Applies custom country multipliers to the Weighted HW count.
+    """
+    import csv
+    import os
+    import json
+    from main import normalize_country_name, DRAFTED_TEAMS
+    
+    filename = "team_scores.csv"
+    print(f"Exporting team scores to {filename}...")
+    headers = ["Team", "HW Gold", "HW Silver", "HW Bronze", "Total HW", "Weighted HW", "Final Score"]
+    
+    # Load multipliers
+    multipliers = {}
+    if os.path.exists('multipliers.json'):
+        try:
+            with open('multipliers.json', 'r') as f:
+                multipliers = json.load(f)
+        except Exception:
+            pass
+            
+    team_totals = {team: {'g': 0, 's': 0, 'b': 0, 'tot': 0, 'weighted': 0, 'final': 0.0} for team in DRAFTED_TEAMS}
+    
+    for country, counts in hw_counts.items():
+        hw_g = counts.get('Gold', 0)
+        hw_s = counts.get('Silver', 0)
+        hw_b = counts.get('Bronze', 0)
+        tot = hw_g + hw_s + hw_b
+        weighted = (hw_g * 3) + (hw_s * 2) + (hw_b * 1)
+        
+        # Apply multiplier (default to 1.0 if not found)
+        search_name = "AIN" if country == "Individual Neutral Athletes" else country
+        mult = 1.0
+        c_norm = normalize_country_name(search_name)
+        for k, v in multipliers.items():
+            if normalize_country_name(k) == c_norm:
+                mult = v
+                break
+                
+        final_score = weighted * mult
+        
+        # Find which team owns this country
+        owner_team = None
+        for team, countries in DRAFTED_TEAMS.items():
+            if search_name in countries or country in countries:
+                owner_team = team
+                break
+            # Try fuzzy matching within team list
+            for c in countries:
+                if normalize_country_name(c) == c_norm:
+                    owner_team = team
+                    break
+            if owner_team: break
+            
+        if owner_team:
+            team_totals[owner_team]['g'] += hw_g
+            team_totals[owner_team]['s'] += hw_s
+            team_totals[owner_team]['b'] += hw_b
+            team_totals[owner_team]['tot'] += tot
+            team_totals[owner_team]['weighted'] += weighted
+            team_totals[owner_team]['final'] += final_score
+
+    rows = []
+    for team, t_counts in team_totals.items():
+        rows.append([
+            team, 
+            t_counts['g'], 
+            t_counts['s'], 
+            t_counts['b'], 
+            t_counts['tot'], 
+            t_counts['weighted'], 
+            round(t_counts['final'], 2)  # Round final score for clean CSV display
+        ])
+        
+    # Sort by Final Score (descending)
+    rows.sort(key=lambda x: x[6], reverse=True)
+    
+    try:
+        with open(filename, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow(headers)
+            writer.writerows(rows)
+        print("Successfully exported team scores.")
+    except Exception as e:
+        print(f"Failed to export team scores: {e}")
+
 def main():
     try:
         client = get_google_sheet_client()
@@ -1058,6 +1153,7 @@ def main():
             hw_counts = aggregate_hardware_counts(details)
             if hw_counts:
                 export_hardware_to_csv(hw_counts)
+                export_teams_to_csv(hw_counts)
         else:
             details = []
             print(f"Validation FAILED for Details ({msg_d}). Hardware counts will skip.")
