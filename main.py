@@ -412,11 +412,24 @@ def aggregate_hardware_counts(details):
 def export_hardware_to_csv(hw_counts, filename="hardware_counts.csv"):
     """
     Exports the aggregated hardware counts to a CSV file.
+    Applies custom country multipliers to the Weighted HW count.
     """
     import csv
+    import os
+    import json
+    
     print(f"Exporting hardware counts to {filename}...")
-    headers = ["Country", "HW Gold", "HW Silver", "HW Bronze", "Total HW", "Weighted HW"]
+    headers = ["Country", "HW Gold", "HW Silver", "HW Bronze", "Total HW", "Weighted HW", "Multiplier", "Final Score"]
     rows = []
+    
+    # Load multipliers
+    multipliers = {}
+    if os.path.exists('multipliers.json'):
+        try:
+            with open('multipliers.json', 'r') as f:
+                multipliers = json.load(f)
+        except Exception:
+            pass
     
     for country, counts in hw_counts.items():
         hw_g = counts.get('Gold', 0)
@@ -424,10 +437,27 @@ def export_hardware_to_csv(hw_counts, filename="hardware_counts.csv"):
         hw_b = counts.get('Bronze', 0)
         tot = hw_g + hw_s + hw_b
         weighted = (hw_g * 3) + (hw_s * 2) + (hw_b * 1)
-        rows.append([country, hw_g, hw_s, hw_b, tot, weighted])
         
-    # Sort by Weighted HW descending, then Total HW descending, then Gold descending
-    rows.sort(key=lambda x: (x[5], x[4], x[1]), reverse=True)
+        # Apply multiplier (default to 1.0 if not found)
+        # Check explicit Country Name map just in case
+        from main import normalize_country_name
+        
+        # Override name for AIN mapping
+        search_name = "AIN" if country == "Individual Neutral Athletes" else country
+        
+        # We need a robust way to match the country with the multiplier file
+        mult = 1.0
+        c_norm = normalize_country_name(search_name)
+        for k, v in multipliers.items():
+            if normalize_country_name(k) == c_norm:
+                mult = v
+                break
+                
+        final_score = weighted * mult
+        rows.append([country, hw_g, hw_s, hw_b, tot, weighted, mult, final_score])
+        
+    # Sort by Final Score (descending), then Weighted HW (desc)
+    rows.sort(key=lambda x: (x[7], x[5], x[1]), reverse=True)
     
     try:
         with open(filename, 'w', newline='', encoding='utf-8') as f:
