@@ -77,7 +77,7 @@ def generate_markdown():
         # Detail standard medals
         markdown_content += (
             f"**{country}** sent a delegation of **{participants}** athletes to the winter games. "
-            f"They performed admirably, bringing home a standard haul of **{total_m} medals** "
+            f"They performed admirably, bringing home a haul of **{total_m} medals** "
             f"({g} 🥇, {s} 🥈, {b} 🥉) which netted them a baseline weighted score of {weighted_m} points.\n\n"
         )
         
