@@ -1074,6 +1074,7 @@ def export_teams_to_csv(hw_counts):
             pass
             
     team_totals = {team: {'g': 0, 's': 0, 'b': 0, 'tot': 0, 'weighted': 0, 'final': 0.0} for team in DRAFTED_TEAMS}
+    from main import COUNTRY_NAME_MAP
     
     for country, counts in hw_counts.items():
         hw_g = counts.get('Gold', 0)
@@ -1099,11 +1100,23 @@ def export_teams_to_csv(hw_counts):
             if search_name in countries or country in countries:
                 owner_team = team
                 break
-            # Try fuzzy matching within team list
+                
+            mapped_c = COUNTRY_NAME_MAP.get(search_name) or COUNTRY_NAME_MAP.get(country)
+            if mapped_c and mapped_c in countries:
+                owner_team = team
+                break
+                
             for c in countries:
-                if normalize_country_name(c) == c_norm:
+                if normalize_country_name(c) == c_norm or normalize_country_name(COUNTRY_NAME_MAP.get(c, c)) == c_norm:
                     owner_team = team
                     break
+                    
+            if not owner_team:
+                for k, v in COUNTRY_NAME_MAP.items():
+                    if v in countries and (normalize_country_name(k) == c_norm or k == search_name):
+                        owner_team = team
+                        break
+                        
             if owner_team: break
             
         if owner_team:
@@ -1123,7 +1136,7 @@ def export_teams_to_csv(hw_counts):
             t_counts['b'], 
             t_counts['tot'], 
             t_counts['weighted'], 
-            round(t_counts['final'], 2)  # Round final score for clean CSV display
+            round(t_counts['final'], 2)
         ])
         
     # Sort by Final Score (descending)
@@ -1137,6 +1150,117 @@ def export_teams_to_csv(hw_counts):
         print("Successfully exported team scores.")
     except Exception as e:
         print(f"Failed to export team scores: {e}")
+
+def export_player_scores_to_csv(hw_counts, medal_counts):
+    """
+    Exports a clean CSV containing only the 4 requested scores for each player:
+    Weighted HW, Final Score (HW * Mult), Medals, Multiplied Medals.
+    """
+    import csv
+    import os
+    import json
+    from main import normalize_country_name, DRAFTED_TEAMS, COUNTRY_NAME_MAP
+    
+    filename = "player_scores.csv"
+    print(f"Exporting player scores to {filename}...")
+    headers = ["Player", "Weighted HW", "Final Score", "Medals", "Multiplied Medals"]
+    
+    # Load multipliers
+    multipliers = {}
+    if os.path.exists('multipliers.json'):
+        try:
+            with open('multipliers.json', 'r') as f:
+                multipliers = json.load(f)
+        except Exception:
+            pass
+            
+    player_totals = {player: {'weighted_hw': 0, 'final_score': 0.0, 'medals': 0, 'multiplied_medals': 0.0} for player in DRAFTED_TEAMS}
+    
+    # 1. Calculate HW related scores (Weighted HW, Final Score)
+    for country, counts in hw_counts.items():
+        hw_g = counts.get('Gold', 0)
+        hw_s = counts.get('Silver', 0)
+        hw_b = counts.get('Bronze', 0)
+        weighted_hw = (hw_g * 3) + (hw_s * 2) + (hw_b * 1)
+        
+        search_name = "AIN" if country == "Individual Neutral Athletes" else country
+        c_norm = normalize_country_name(search_name)
+        mult = 1.0
+        for k, v in multipliers.items():
+            if normalize_country_name(k) == c_norm:
+                mult = v
+                break
+                
+        final_hw_score = weighted_hw * mult
+        
+        owner_team = None
+        for team, countries in DRAFTED_TEAMS.items():
+            if search_name in countries or country in countries: owner_team = team; break
+            if COUNTRY_NAME_MAP.get(search_name, search_name) in countries: owner_team = team; break
+            for c in countries:
+                if normalize_country_name(c) == c_norm or normalize_country_name(COUNTRY_NAME_MAP.get(c, c)) == c_norm:
+                    owner_team = team; break
+            if not owner_team:
+                for k, v in COUNTRY_NAME_MAP.items():
+                    if v in countries and (normalize_country_name(k) == c_norm or k == search_name):
+                        owner_team = team; break
+            if owner_team: break
+            
+        if owner_team:
+            player_totals[owner_team]['weighted_hw'] += weighted_hw
+            player_totals[owner_team]['final_score'] += final_hw_score
+
+    # 2. Calculate Standard Medals scores (Medals, Multiplied Medals)
+    for country, counts in medal_counts.items():
+        g, s, b = counts.get('Gold', 0), counts.get('Silver', 0), counts.get('Bronze', 0)
+        standard_w = (g * 3) + (s * 2) + b
+        
+        search_name = "AIN" if country == "Individual Neutral Athletes" else country
+        c_norm = normalize_country_name(search_name)
+        mult = 1.0
+        for k, v in multipliers.items():
+            if normalize_country_name(k) == c_norm:
+                mult = v
+                break
+                
+        owner_team = None
+        for team, countries in DRAFTED_TEAMS.items():
+            if search_name in countries or country in countries: owner_team = team; break
+            if COUNTRY_NAME_MAP.get(search_name, search_name) in countries: owner_team = team; break
+            for c in countries:
+                if normalize_country_name(c) == c_norm or normalize_country_name(COUNTRY_NAME_MAP.get(c, c)) == c_norm:
+                    owner_team = team; break
+            if not owner_team:
+                for k, v in COUNTRY_NAME_MAP.items():
+                    if v in countries and (normalize_country_name(k) == c_norm or k == search_name):
+                        owner_team = team; break
+            if owner_team: break
+            
+        if owner_team:
+            player_totals[owner_team]['medals'] += standard_w
+            player_totals[owner_team]['multiplied_medals'] += (standard_w * mult)
+
+    rows = []
+    for player, p_scores in player_totals.items():
+        rows.append([
+            player, 
+            p_scores['weighted_hw'], 
+            round(p_scores['final_score'], 2),
+            p_scores['medals'],
+            round(p_scores['multiplied_medals'], 2)
+        ])
+        
+    # Sort by Final Score (descending)
+    rows.sort(key=lambda x: x[2], reverse=True)
+    
+    try:
+        with open(filename, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow(headers)
+            writer.writerows(rows)
+        print("Successfully exported player scores.")
+    except Exception as e:
+        print(f"Failed to export player scores: {e}")
 
 def main():
     try:
@@ -1153,7 +1277,6 @@ def main():
             hw_counts = aggregate_hardware_counts(details)
             if hw_counts:
                 export_hardware_to_csv(hw_counts)
-                export_teams_to_csv(hw_counts)
         else:
             details = []
             print(f"Validation FAILED for Details ({msg_d}). Hardware counts will skip.")
@@ -1161,6 +1284,13 @@ def main():
         # 2. Scrape Counts & Validate
         counts = scrape_medal_counts()
         is_valid_c, msg_c = validate_data(counts, "counts")
+        
+        # Export team and player scores after BOTH hardware and counts are available
+        if is_valid_d and is_valid_c and hw_counts:
+            export_teams_to_csv(hw_counts)
+            export_player_scores_to_csv(hw_counts, counts)
+        elif is_valid_d and hw_counts:
+            export_teams_to_csv(hw_counts)
         
         if is_valid_c:
             update_results_tab(client, counts)
