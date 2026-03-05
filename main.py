@@ -472,7 +472,7 @@ def export_hardware_to_csv(hw_counts, filename="hardware_counts.csv"):
 DRAFTED_TEAMS = {
     "Maya": ["Germany", "Austria", "France", "Switzerland", "Great Britain", "Estonia", "Greece"],
     "Ross": ["Norway", "Sweden", "Japan", "China", "South Korea", "Czech Republic", "Spain"],
-    "Mom": ["Canada", "USA", "Italy", "Australia", "Finland", "AIN", "Denmark", "Individual Neutral Athletes"],
+    "Mom": ["Canada", "USA", "Italy", "Australia", "Finland", "AIN", "Denmark"],
     "Drew": ["Netherlands", "Poland", "New Zealand", "Slovenia", "Belgium", "Croatia", "Chinese Taipei"]
 }
 

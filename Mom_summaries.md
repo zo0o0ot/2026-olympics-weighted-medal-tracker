@@ -8,9 +8,11 @@ They excelled in large team sports, significantly boosting their physical medal 
 
 ---
 
-## USA
+## United States of America 🇺🇸
 
-**USA** did not bring home any medals during these winter games.
+**United States of America** sent a delegation of **233** athletes to the winter games. They delivered a powerhouse performance, bringing home a haul of **33 medals** (12 🥇, 12 🥈, 9 🥉) which netted them a baseline weighted score of 69 points.
+
+They excelled in large team sports, significantly boosting their physical medal count to **96 total hardware medals** placed around necks. After factoring in their custom draft handicap, they finished the games with a Final **Multiplied Hardware** score of **249.0** and a base **Multiplied Medals** score of **69.0**.
 
 ---
 
@@ -38,9 +40,11 @@ They excelled in large team sports, significantly boosting their physical medal 
 
 ---
 
-## AIN
+## Individual Neutral Athletes
 
-**AIN** did not bring home any medals during these winter games.
+**Individual Neutral Athletes** sent a delegation of **20** athletes to the winter games. They made their mark on the games, bringing home a haul of **1 medals** (0 🥇, 1 🥈, 0 🥉) which netted them a baseline weighted score of 2 points.
+
+Their medals came entirely from individual events, keeping their physical hardware output equal to their standard medal count. After factoring in their custom draft handicap, they finished the games with a Final **Multiplied Hardware** score of **23.3** and a base **Multiplied Medals** score of **23.3**.
 
 ---
 
@@ -49,14 +53,6 @@ They excelled in large team sports, significantly boosting their physical medal 
 **Denmark** sent a delegation of **39** athletes to the winter games. They made their mark on the games, bringing home a haul of **1 medals** (0 🥇, 1 🥈, 0 🥉) which netted them a baseline weighted score of 2 points.
 
 Their medals came entirely from individual events, keeping their physical hardware output equal to their standard medal count. After factoring in their custom draft handicap, they finished the games with a Final **Multiplied Hardware** score of **11.95** and a base **Multiplied Medals** score of **11.95**.
-
----
-
-## Individual Neutral Athletes
-
-**Individual Neutral Athletes** sent a delegation of **20** athletes to the winter games. They made their mark on the games, bringing home a haul of **1 medals** (0 🥇, 1 🥈, 0 🥉) which netted them a baseline weighted score of 2 points.
-
-Their medals came entirely from individual events, keeping their physical hardware output equal to their standard medal count. After factoring in their custom draft handicap, they finished the games with a Final **Multiplied Hardware** score of **23.3** and a base **Multiplied Medals** score of **23.3**.
 
 ---
 

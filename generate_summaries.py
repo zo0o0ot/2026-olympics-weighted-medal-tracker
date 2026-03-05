@@ -6,6 +6,7 @@ FLAG_MAP = {
     "Norway": "🇳🇴",
     "Netherlands": "🇳🇱",
     "United States": "🇺🇸",
+    "United States of America": "🇺🇸",
     "Canada": "🇨🇦",
     "Great Britain": "🇬🇧",
     "Sweden": "🇸🇪",
@@ -53,7 +54,7 @@ def generate_markdown():
     except Exception:
         details = []
         
-    from main import DRAFTED_TEAMS
+    from main import DRAFTED_TEAMS, COUNTRY_NAME_MAP
     
     for player_name, drafted_countries in DRAFTED_TEAMS.items():
         md_file = f"{player_name}_summaries.md"
@@ -66,18 +67,32 @@ def generate_markdown():
             # Find row
             matching_row = None
             for row in rows:
-                if normalize_country_name(row['Country']) == c_norm_drafted:
+                csv_c = row['Country']
+                if normalize_country_name(csv_c) == c_norm_drafted or normalize_country_name(COUNTRY_NAME_MAP.get(csv_c, csv_c)) == c_norm_drafted:
                     matching_row = row
                     break
                     
-            flag = FLAG_MAP.get(drafted_country, "")
-            if not flag and matching_row:
-                flag = FLAG_MAP.get(matching_row['Country'], "")
+            if matching_row:
+                display_name = matching_row['Country']
+            else:
+                display_name = drafted_country
+                for k, v in COUNTRY_NAME_MAP.items():
+                    if normalize_country_name(v) == c_norm_drafted:
+                        display_name = k
+                        break
+                        
+            # Apply user-requested display overrides
+            if display_name in ["United States", "USA"]:
+                display_name = "United States of America"
+            elif display_name == "AIN":
+                display_name = "Individual Neutral Athletes"
+                
+            flag = FLAG_MAP.get(display_name, FLAG_MAP.get(drafted_country, ""))
             if flag:
                 flag = f" {flag}"
                 
             # Build paragraph
-            markdown_content += f"## {drafted_country}{flag}\n\n"
+            markdown_content += f"## {display_name}{flag}\n\n"
             
             if matching_row:
                 row = matching_row
@@ -104,8 +119,9 @@ def generate_markdown():
                 else:
                     performance_desc = "made their mark on the games"
     
+                # Use display_name in the text instead of the raw row country
                 markdown_content += (
-                    f"**{country}** sent a delegation of **{participants}** athletes to the winter games. "
+                    f"**{display_name}** sent a delegation of **{participants}** athletes to the winter games. "
                     f"They {performance_desc}, bringing home a haul of **{total_m} medals** "
                     f"({g} 🥇, {s} 🥈, {b} 🥉) which netted them a baseline weighted score of {weighted_m} points.\n\n"
                 )
