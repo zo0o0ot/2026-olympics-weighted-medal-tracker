@@ -8,19 +8,17 @@ They excelled in large team sports, significantly boosting their physical medal 
 
 ---
 
+## USA
+
+**USA** did not bring home any medals during these winter games.
+
+---
+
 ## Italy 🇮🇹
 
 **Italy** sent a delegation of **196** athletes to the winter games. They delivered a powerhouse performance, bringing home a haul of **30 medals** (10 🥇, 6 🥈, 14 🥉) which netted them a baseline weighted score of 56 points.
 
 They excelled in large team sports, significantly boosting their physical medal count to **69 total hardware medals** placed around necks. After factoring in their custom draft handicap, they finished the games with a Final **Multiplied Hardware** score of **143.84** and a base **Multiplied Medals** score of **66.57**.
-
----
-
-## Finland 🇫🇮
-
-**Finland** sent a delegation of **103** athletes to the winter games. They had a solid showing, bringing home a haul of **6 medals** (0 🥇, 1 🥈, 5 🥉) which netted them a baseline weighted score of 7 points.
-
-They excelled in large team sports, significantly boosting their physical medal count to **36 total hardware medals** placed around necks. After factoring in their custom draft handicap, they finished the games with a Final **Multiplied Hardware** score of **90.49** and a base **Multiplied Medals** score of **15.83**.
 
 ---
 
@@ -32,11 +30,17 @@ Their medals came entirely from individual events, keeping their physical hardwa
 
 ---
 
-## Individual Neutral Athletes
+## Finland 🇫🇮
 
-**Individual Neutral Athletes** sent a delegation of **20** athletes to the winter games. They made their mark on the games, bringing home a haul of **1 medals** (0 🥇, 1 🥈, 0 🥉) which netted them a baseline weighted score of 2 points.
+**Finland** sent a delegation of **103** athletes to the winter games. They had a solid showing, bringing home a haul of **6 medals** (0 🥇, 1 🥈, 5 🥉) which netted them a baseline weighted score of 7 points.
 
-Their medals came entirely from individual events, keeping their physical hardware output equal to their standard medal count. After factoring in their custom draft handicap, they finished the games with a Final **Multiplied Hardware** score of **23.3** and a base **Multiplied Medals** score of **23.3**.
+They excelled in large team sports, significantly boosting their physical medal count to **36 total hardware medals** placed around necks. After factoring in their custom draft handicap, they finished the games with a Final **Multiplied Hardware** score of **90.49** and a base **Multiplied Medals** score of **15.83**.
+
+---
+
+## AIN
+
+**AIN** did not bring home any medals during these winter games.
 
 ---
 
@@ -45,6 +49,14 @@ Their medals came entirely from individual events, keeping their physical hardwa
 **Denmark** sent a delegation of **39** athletes to the winter games. They made their mark on the games, bringing home a haul of **1 medals** (0 🥇, 1 🥈, 0 🥉) which netted them a baseline weighted score of 2 points.
 
 Their medals came entirely from individual events, keeping their physical hardware output equal to their standard medal count. After factoring in their custom draft handicap, they finished the games with a Final **Multiplied Hardware** score of **11.95** and a base **Multiplied Medals** score of **11.95**.
+
+---
+
+## Individual Neutral Athletes
+
+**Individual Neutral Athletes** sent a delegation of **20** athletes to the winter games. They made their mark on the games, bringing home a haul of **1 medals** (0 🥇, 1 🥈, 0 🥉) which netted them a baseline weighted score of 2 points.
+
+Their medals came entirely from individual events, keeping their physical hardware output equal to their standard medal count. After factoring in their custom draft handicap, they finished the games with a Final **Multiplied Hardware** score of **23.3** and a base **Multiplied Medals** score of **23.3**.
 
 ---
 

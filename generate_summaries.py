@@ -60,97 +60,92 @@ def generate_markdown():
         markdown_content = f"# {player_name}'s Drafted Country Summaries\n\n"
         
         # Filter rows to only this player's countries
-        # The CSV has normalized names, so we need to match carefully
-        player_rows = []
-        for row in rows:
-            # We check if the csv country (or 'AIN') is in their drafted list
-            # We already mapped AIN in the CSV back to "Individual Neutral Athletes" row name,
-            # but let's be safe and check both the raw CSV name and normalized
-            csv_country = row['Country']
-            c_norm = normalize_country_name(csv_country)
+        for drafted_country in drafted_countries:
+            c_norm_drafted = normalize_country_name(drafted_country)
             
-            # Check if this country is in their draft list
-            is_drafted = False
-            for drafted_c in drafted_countries:
-                if normalize_country_name(drafted_c) == c_norm:
-                    is_drafted = True
+            # Find row
+            matching_row = None
+            for row in rows:
+                if normalize_country_name(row['Country']) == c_norm_drafted:
+                    matching_row = row
                     break
-            
-            if is_drafted:
-                player_rows.append(row)
-                
-        if not player_rows:
-            continue
-            
-        for row in player_rows:
-            country = row['Country']
-            flag = FLAG_MAP.get(country, "")
+                    
+            flag = FLAG_MAP.get(drafted_country, "")
+            if not flag and matching_row:
+                flag = FLAG_MAP.get(matching_row['Country'], "")
             if flag:
                 flag = f" {flag}"
                 
-            participants = row['Participants']
-            g = row['Gold Medals']
-            s = row['Silver Medals']
-            b = row['Bronze Medals']
-            total_m = row['Total Medals']
-            weighted_m = row['Weighted Medals']
-            total_hw = row['Total Hardware']
-            mult_m = row['Multiplied Medals']
-            mult_hw = row['Multiplied Hardware']
-            
             # Build paragraph
-            markdown_content += f"## {country}{flag}\n\n"
+            markdown_content += f"## {drafted_country}{flag}\n\n"
             
-            # Detail standard medals
-            total_m_int = int(total_m)
-            if total_m_int >= 20:
-                performance_desc = "delivered a powerhouse performance"
-            elif total_m_int >= 10:
-                performance_desc = "put together a strong campaign"
-            elif total_m_int >= 5:
-                performance_desc = "had a solid showing"
-            else:
-                performance_desc = "made their mark on the games"
-
-            markdown_content += (
-                f"**{country}** sent a delegation of **{participants}** athletes to the winter games. "
-                f"They {performance_desc}, bringing home a haul of **{total_m} medals** "
-                f"({g} 🥇, {s} 🥈, {b} 🥉) which netted them a baseline weighted score of {weighted_m} points.\n\n"
-            )
-            
-            # Determine highest team size for event multiplier logic
-            max_multiplier = 1
-            search_name = "AIN" if country == "Individual Neutral Athletes" else country
-            c_norm = normalize_country_name(search_name)
-            
-            for detail in details:
-                if normalize_country_name(detail.get('Country', '')) == c_norm:
-                    mult = get_hardware_multiplier(detail.get('Event', ''), detail.get('Medal', ''))
-                    if mult > max_multiplier:
-                        max_multiplier = mult
-
-            # Detail hardware and multipliers (analytical breakdown)
-            hardware_difference = int(total_hw) - int(total_m)
-            
-            if max_multiplier > 6:
+            if matching_row:
+                row = matching_row
+                country = row['Country']
+                    
+                participants = row['Participants']
+                g = row['Gold Medals']
+                s = row['Silver Medals']
+                b = row['Bronze Medals']
+                total_m = row['Total Medals']
+                weighted_m = row['Weighted Medals']
+                total_hw = row['Total Hardware']
+                mult_m = row['Multiplied Medals']
+                mult_hw = row['Multiplied Hardware']
+                
+                # Detail standard medals
+                total_m_int = int(total_m)
+                if total_m_int >= 20:
+                    performance_desc = "delivered a powerhouse performance"
+                elif total_m_int >= 10:
+                    performance_desc = "put together a strong campaign"
+                elif total_m_int >= 5:
+                    performance_desc = "had a solid showing"
+                else:
+                    performance_desc = "made their mark on the games"
+    
                 markdown_content += (
-                    f"They excelled in large team sports, significantly boosting their physical medal count to "
-                    f"**{total_hw} total hardware medals** placed around necks. "
-                )
-            elif max_multiplier > 1 or hardware_difference > 0:
-                markdown_content += (
-                    f"Their success in small team sports and relays boosted their physical medal count to "
-                    f"**{total_hw} total hardware medals** placed around necks. "
-                )
-            else:
-                markdown_content += (
-                    f"Their medals came entirely from individual events, keeping their physical hardware output equal to their standard medal count. "
+                    f"**{country}** sent a delegation of **{participants}** athletes to the winter games. "
+                    f"They {performance_desc}, bringing home a haul of **{total_m} medals** "
+                    f"({g} 🥇, {s} 🥈, {b} 🥉) which netted them a baseline weighted score of {weighted_m} points.\n\n"
                 )
                 
-            markdown_content += (
-                f"After factoring in their custom draft handicap, they finished the games with a "
-                f"Final **Multiplied Hardware** score of **{mult_hw}** and a base **Multiplied Medals** score of **{mult_m}**.\n\n"
-            )
+                # Determine highest team size for event multiplier logic
+                max_multiplier = 1
+                search_name = "AIN" if country == "Individual Neutral Athletes" else country
+                c_norm = normalize_country_name(search_name)
+                
+                for detail in details:
+                    if normalize_country_name(detail.get('Country', '')) == c_norm:
+                        mult = get_hardware_multiplier(detail.get('Event', ''), detail.get('Medal', ''))
+                        if mult > max_multiplier:
+                            max_multiplier = mult
+    
+                # Detail hardware and multipliers (analytical breakdown)
+                hardware_difference = int(total_hw) - int(total_m)
+                
+                if max_multiplier > 6:
+                    markdown_content += (
+                        f"They excelled in large team sports, significantly boosting their physical medal count to "
+                        f"**{total_hw} total hardware medals** placed around necks. "
+                    )
+                elif max_multiplier > 1 or hardware_difference > 0:
+                    markdown_content += (
+                        f"Their success in small team sports and relays boosted their physical medal count to "
+                        f"**{total_hw} total hardware medals** placed around necks. "
+                    )
+                else:
+                    markdown_content += (
+                        f"Their medals came entirely from individual events, keeping their physical hardware output equal to their standard medal count. "
+                    )
+                    
+                markdown_content += (
+                    f"After factoring in their custom draft handicap, they finished the games with a "
+                    f"Final **Multiplied Hardware** score of **{mult_hw}** and a base **Multiplied Medals** score of **{mult_m}**.\n\n"
+                )
+            else:
+                markdown_content += f"**{drafted_country}** did not bring home any medals during these winter games.\n\n"
+                
             markdown_content += "---\n\n"
             
         with open(md_file, 'w', encoding='utf-8') as f:
