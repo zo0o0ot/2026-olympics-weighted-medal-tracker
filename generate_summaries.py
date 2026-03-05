@@ -1,4 +1,6 @@
 import csv
+import json
+from main import get_hardware_multiplier, normalize_country_name
 
 FLAG_MAP = {
     "Norway": "🇳🇴",
@@ -45,6 +47,12 @@ def generate_markdown():
         reader = csv.DictReader(f)
         rows = list(reader)
         
+    try:
+        with open('scraped_details.json', 'r', encoding='utf-8') as f:
+            details = json.load(f)
+    except Exception:
+        details = []
+        
     markdown_content = "# Country Performance Summaries\n\n"
     
     for row in rows:
@@ -73,17 +81,28 @@ def generate_markdown():
             f"({g} 🥇, {s} 🥈, {b} 🥉) which netted them a baseline weighted score of {weighted_m} points.\n\n"
         )
         
+        # Determine highest team size for event multiplier logic
+        max_multiplier = 1
+        search_name = "AIN" if country == "Individual Neutral Athletes" else country
+        c_norm = normalize_country_name(search_name)
+        
+        for detail in details:
+            if normalize_country_name(detail.get('Country', '')) == c_norm:
+                mult = get_hardware_multiplier(detail.get('Event', ''), detail.get('Medal', ''))
+                if mult > max_multiplier:
+                    max_multiplier = mult
+
         # Detail hardware and multipliers (analytical breakdown)
         hardware_difference = int(total_hw) - int(total_m)
         
-        if hardware_difference >= 20:
+        if max_multiplier > 6:
             markdown_content += (
                 f"They excelled in large team sports, significantly boosting their physical medal count to "
                 f"**{total_hw} total hardware medals** placed around necks. "
             )
-        elif hardware_difference > 0:
+        elif max_multiplier > 1 or hardware_difference > 0:
             markdown_content += (
-                f"Their success in team events and relays boosted their physical medal count to "
+                f"Their success in small team sports and relays boosted their physical medal count to "
                 f"**{total_hw} total hardware medals** placed around necks. "
             )
         else:
