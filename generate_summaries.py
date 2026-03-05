@@ -76,9 +76,14 @@ def generate_markdown():
         # Detail hardware and multipliers (analytical breakdown)
         hardware_difference = int(total_hw) - int(total_m)
         
-        if hardware_difference > 0:
+        if hardware_difference >= 20:
             markdown_content += (
-                f"They heavily leaned into team sports, significantly boosting their physical medal count to "
+                f"They excelled in large team sports, significantly boosting their physical medal count to "
+                f"**{total_hw} total hardware medals** placed around necks. "
+            )
+        elif hardware_difference > 0:
+            markdown_content += (
+                f"Their success in team events and relays boosted their physical medal count to "
                 f"**{total_hw} total hardware medals** placed around necks. "
             )
         else:
