@@ -1,4 +1,4 @@
-# Country Performance Summaries
+# Master Country Performance Summaries
 
 ## Norway 🇳🇴
 
@@ -16,9 +16,9 @@ Their success in small team sports and relays boosted their physical medal count
 
 ---
 
-## United States 🇺🇸
+## United States of America 🇺🇸
 
-**United States** sent a delegation of **233** athletes to the winter games. They delivered a powerhouse performance, bringing home a haul of **33 medals** (12 🥇, 12 🥈, 9 🥉) which netted them a baseline weighted score of 69 points.
+**United States of America** sent a delegation of **233** athletes to the winter games. They delivered a powerhouse performance, bringing home a haul of **33 medals** (12 🥇, 12 🥈, 9 🥉) which netted them a baseline weighted score of 69 points.
 
 They excelled in large team sports, significantly boosting their physical medal count to **96 total hardware medals** placed around necks. After factoring in their custom draft handicap, they finished the games with a Final **Multiplied Hardware** score of **249.0** and a base **Multiplied Medals** score of **69.0**.
 
