@@ -1275,7 +1275,7 @@ def export_country_blog_csv(hw_counts, medal_counts):
     print(f"Exporting country blog data to {filename}...")
     headers = [
         "Country", "Participants", "Gold Medals", "Silver Medals", "Bronze Medals", 
-        "Total Medals", "Weighted Medals", "Weighted Hardware", 
+        "Total Medals", "Weighted Medals", "Total Hardware", "Weighted Hardware", 
         "Multiplied Medals", "Multiplied Hardware"
     ]
     
@@ -1303,7 +1303,7 @@ def export_country_blog_csv(hw_counts, medal_counts):
         # Hardware Math
         h_counts = hw_counts.get(country, {})
         hw_g, hw_s, hw_b = h_counts.get('Gold', 0), h_counts.get('Silver', 0), h_counts.get('Bronze', 0)
-        participants = hw_g + hw_s + hw_b
+        total_hw = hw_g + hw_s + hw_b
         weighted_hw = (hw_g * 3) + (hw_s * 2) + (hw_b * 1)
         
         # Multiplier Logic
@@ -1315,24 +1315,28 @@ def export_country_blog_csv(hw_counts, medal_counts):
                 mult = v
                 break
                 
+        # Calculate True Participants (from User logic: Multiplier = 233 / Athletes)
+        true_participants = round(233 / mult)
+                
         multiplied_medals = weighted_medals * mult
         multiplied_hw = weighted_hw * mult
         
         # Only add countries that actually have medals to keep the blog clean
-        if total_medals > 0 or participants > 0:
+        if total_medals > 0 or total_hw > 0:
             rows.append([
                 country,
-                participants,
+                true_participants,
                 g, s, b,
                 total_medals,
                 weighted_medals,
+                total_hw,
                 weighted_hw,
                 round(multiplied_medals, 2),
                 round(multiplied_hw, 2)
             ])
             
     # Sort primarily by Multiplied Hardware descending, then Multiplied Medals descending
-    rows.sort(key=lambda x: (x[9], x[8]), reverse=True)
+    rows.sort(key=lambda x: (x[10], x[9]), reverse=True)
     
     try:
         with open(filename, 'w', newline='', encoding='utf-8') as f:
