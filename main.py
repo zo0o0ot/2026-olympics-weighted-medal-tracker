@@ -1262,6 +1262,87 @@ def export_player_scores_to_csv(hw_counts, medal_counts):
     except Exception as e:
         print(f"Failed to export player scores: {e}")
 
+def export_country_blog_csv(hw_counts, medal_counts):
+    """
+    Exports a detailed CSV for a blog post breaking down analytical performance per country.
+    """
+    import csv
+    import os
+    import json
+    from main import normalize_country_name
+    
+    filename = "country_blog_data.csv"
+    print(f"Exporting country blog data to {filename}...")
+    headers = [
+        "Country", "Participants", "Gold Medals", "Silver Medals", "Bronze Medals", 
+        "Total Medals", "Weighted Medals", "Weighted Hardware", 
+        "Multiplied Medals", "Multiplied Hardware"
+    ]
+    
+    # Load multipliers
+    multipliers = {}
+    if os.path.exists('multipliers.json'):
+        try:
+            with open('multipliers.json', 'r') as f:
+                multipliers = json.load(f)
+        except Exception:
+            pass
+            
+    # Combine the list of countries from both dictionaries to ensure we don't miss any
+    all_countries = set(hw_counts.keys()).union(set(medal_counts.keys()))
+    
+    rows = []
+    
+    for country in all_countries:
+        # Standard Medals Math
+        s_counts = medal_counts.get(country, {})
+        g, s, b = s_counts.get('Gold', 0), s_counts.get('Silver', 0), s_counts.get('Bronze', 0)
+        total_medals = g + s + b
+        weighted_medals = (g * 3) + (s * 2) + b
+        
+        # Hardware Math
+        h_counts = hw_counts.get(country, {})
+        hw_g, hw_s, hw_b = h_counts.get('Gold', 0), h_counts.get('Silver', 0), h_counts.get('Bronze', 0)
+        participants = hw_g + hw_s + hw_b
+        weighted_hw = (hw_g * 3) + (hw_s * 2) + (hw_b * 1)
+        
+        # Multiplier Logic
+        search_name = "AIN" if country == "Individual Neutral Athletes" else country
+        c_norm = normalize_country_name(search_name)
+        mult = 1.0
+        for k, v in multipliers.items():
+            if normalize_country_name(k) == c_norm:
+                mult = v
+                break
+                
+        multiplied_medals = weighted_medals * mult
+        multiplied_hw = weighted_hw * mult
+        
+        # Only add countries that actually have medals to keep the blog clean
+        if total_medals > 0 or participants > 0:
+            rows.append([
+                country,
+                participants,
+                g, s, b,
+                total_medals,
+                weighted_medals,
+                weighted_hw,
+                round(multiplied_medals, 2),
+                round(multiplied_hw, 2)
+            ])
+            
+    # Sort primarily by Multiplied Hardware descending, then Multiplied Medals descending
+    rows.sort(key=lambda x: (x[9], x[8]), reverse=True)
+    
+    try:
+        with open(filename, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow(headers)
+            writer.writerows(rows)
+        print("Successfully exported country blog data.")
+    except Exception as e:
+        print(f"Failed to export country blog data: {e}")
+
 def main():
     try:
         client = get_google_sheet_client()
@@ -1289,6 +1370,7 @@ def main():
         if is_valid_d and is_valid_c and hw_counts:
             export_teams_to_csv(hw_counts)
             export_player_scores_to_csv(hw_counts, counts)
+            export_country_blog_csv(hw_counts, counts)
         elif is_valid_d and hw_counts:
             export_teams_to_csv(hw_counts)
         
