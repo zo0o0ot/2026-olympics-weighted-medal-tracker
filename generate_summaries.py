@@ -75,9 +75,19 @@ def generate_markdown():
         markdown_content += f"## {country}{flag}\n\n"
         
         # Detail standard medals
+        total_m_int = int(total_m)
+        if total_m_int >= 20:
+            performance_desc = "delivered a powerhouse performance"
+        elif total_m_int >= 10:
+            performance_desc = "put together a strong campaign"
+        elif total_m_int >= 5:
+            performance_desc = "had a solid showing"
+        else:
+            performance_desc = "made their mark on the games"
+
         markdown_content += (
             f"**{country}** sent a delegation of **{participants}** athletes to the winter games. "
-            f"They performed admirably, bringing home a haul of **{total_m} medals** "
+            f"They {performance_desc}, bringing home a haul of **{total_m} medals** "
             f"({g} 🥇, {s} 🥈, {b} 🥉) which netted them a baseline weighted score of {weighted_m} points.\n\n"
         )
         
