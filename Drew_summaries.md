@@ -46,9 +46,17 @@ Their success in small team sports and relays boosted their physical medal count
 
 ---
 
-## Chinese Taipei 🇹🇼
+## Slovakia 🇸🇰
 
-**Chinese Taipei** did not bring home any medals during these winter games.
+**Slovakia** did not bring home any medals during these winter games.
+
+---
+
+## Latvia 🇱🇻
+
+**Latvia** sent a delegation of **68** athletes to the winter games. They made their mark on the games, bringing home a haul of **2 medals** (0 🥇, 1 🥈, 1 🥉) which netted them a baseline weighted score of 3 points.
+
+Their medals came entirely from individual events, keeping their physical hardware output equal to their standard medal count. After factoring in their custom draft handicap, they finished the games with a Final **Multiplied Hardware** score of **10.28** and a base **Multiplied Medals** score of **10.28**.
 
 ---
 

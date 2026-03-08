@@ -56,3 +56,11 @@ Their success in small team sports and relays boosted their physical medal count
 
 ---
 
+## Brazil 🇧🇷
+
+**Brazil** sent a delegation of **15** athletes to the winter games. They made their mark on the games, bringing home a haul of **1 medals** (1 🥇, 0 🥈, 0 🥉) which netted them a baseline weighted score of 3 points.
+
+Their medals came entirely from individual events, keeping their physical hardware output equal to their standard medal count. After factoring in their custom draft handicap, they finished the games with a Final **Multiplied Hardware** score of **46.6** and a base **Multiplied Medals** score of **46.6**.
+
+---
+

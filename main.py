@@ -470,10 +470,10 @@ def export_hardware_to_csv(hw_counts, filename="hardware_counts.csv"):
 
 # --- Mappings ---
 DRAFTED_TEAMS = {
-    "Maya": ["Germany", "Austria", "France", "Switzerland", "Great Britain", "Estonia", "Greece"],
-    "Ross": ["Norway", "Sweden", "Japan", "China", "South Korea", "Czech Republic", "Spain"],
-    "Mom": ["Canada", "USA", "Italy", "Australia", "Finland", "AIN", "Denmark"],
-    "Drew": ["Netherlands", "Poland", "New Zealand", "Slovenia", "Belgium", "Croatia", "Chinese Taipei"]
+    "Maya": ["Germany", "Austria", "France", "Switzerland", "Great Britain", "Estonia", "Greece", "Ukraine"],
+    "Ross": ["Norway", "Sweden", "Japan", "China", "South Korea", "Czech Republic", "Spain", "Brazil"],
+    "Mom": ["Canada", "USA", "Italy", "Australia", "Finland", "AIN", "Denmark", "Kazakhstan"],
+    "Drew": ["Netherlands", "Poland", "New Zealand", "Slovenia", "Belgium", "Croatia", "Slovakia", "Latvia"]
 }
 
 COUNTRY_NAME_MAP = {

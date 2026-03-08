@@ -54,3 +54,9 @@ Their medals came entirely from individual events, keeping their physical hardwa
 
 ---
 
+## Ukraine 🇺🇦
+
+**Ukraine** did not bring home any medals during these winter games.
+
+---
+

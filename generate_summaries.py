@@ -37,7 +37,9 @@ FLAG_MAP = {
     "Latvia": "🇱🇻",
     "Chinese Taipei": "🇹🇼",
     "Croatia": "🇭🇷",
-    "Greece": "🇬🇷"
+    "Greece": "🇬🇷",
+    "Ukraine": "🇺🇦",
+    "Slovakia": "🇸🇰"
 }
 
 def generate_markdown():
