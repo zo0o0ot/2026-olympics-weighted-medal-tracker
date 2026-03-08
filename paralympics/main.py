@@ -111,21 +111,47 @@ def scrape_wikipedia_data():
                 
     # Extract Medal Table
     medals = []
-    medal_span = soup.find(id='Medal_table')
-    if medal_span and medal_span.parent:
-        table = medal_span.parent.find_next_sibling('table')
-        if table:
-            for row in table.find_all('tr')[1:]:
+    
+    # Fetch dedicated medal table page
+    medal_url = 'https://en.wikipedia.org/wiki/2026_Winter_Paralympics_medal_table'
+    medal_req = urllib.request.Request(medal_url, headers={'User-Agent': 'Mozilla/5.0'})
+    try:
+        medal_html = urllib.request.urlopen(medal_req).read()
+        medal_soup = BeautifulSoup(medal_html, 'html.parser')
+        
+        # Look for the main medal table by checking headers
+        tables = medal_soup.find_all('table')
+        target_table = None
+        for tbl in tables:
+            first_row = tbl.find('tr')
+            if first_row:
+                headers = [th.text.strip().lower() for th in first_row.find_all(['th', 'td'])]
+                if 'gold' in headers and ('npc' in headers or 'nation' in headers) and 'total' in headers:
+                    target_table = tbl
+                    break
+                    
+        if target_table:
+            for row in target_table.find_all('tr')[1:]:
                 cols = row.find_all(['td', 'th'])
                 if len(cols) >= 5:
-                    a_tag = cols[1].find('a')
+                    # Country name is usually in the second column (index 1) or first if no rank
+                    # Let's try to find an <a> tag in the row.
+                    a_tag = None
+                    for col in cols[:3]:
+                        a = col.find('a')
+                        if a and len(a.text.strip()) > 2 and "Paralympics" not in a.text:
+                            a_tag = a
+                            break
+                            
                     if a_tag:
                         country_raw = a_tag.text.strip()
                         country = normalize_country_name(country_raw)
+                        
                         try:
-                            g = int(cols[2].text.strip() or 0)
-                            s = int(cols[3].text.strip() or 0)
-                            b = int(cols[4].text.strip() or 0)
+                            # We can just take the last 4 columns (G, S, B, Total)
+                            g = int(cols[-4].text.strip() or 0)
+                            s = int(cols[-3].text.strip() or 0)
+                            b = int(cols[-2].text.strip() or 0)
                             medals.append({
                                 "CountryRaw": country_raw,
                                 "Country": country,
@@ -134,8 +160,10 @@ def scrape_wikipedia_data():
                                 "Bronze": b,
                                 "Hardware": g + s + b # We will override this with details if available
                             })
-                        except ValueError:
+                        except (ValueError, IndexError):
                             pass
+    except Exception as e:
+        print(f"Failed to fetch {medal_url}: {e}")
                             
     return participants, medals
 
