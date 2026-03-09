@@ -295,23 +295,32 @@ def generate_reports():
     for player, teams in DRAFTED_TEAMS.items():
         p_medals = 0
         p_hw = 0
+        p_total_medals  = 0
+        p_weighted_medals = 0
+        p_total_hw = 0
         for team in teams:
             c_norm = normalize_country_name(team)
             for row in country_outputs:
                 if row['NormName'] == c_norm or normalize_country_name(COUNTRY_NAME_MAP.get(row['Country'], "")) == c_norm:
                     p_medals += row['Multiplied Medals']
                     p_hw += row['Multiplied Hardware']
+                    p_total_medals += row['Total Medals']
+                    p_weighted_medals += row['Weighted Medals']
+                    p_total_hw += row['Total Hardware']
                     break
                     
         player_scores.append({
             "Player": player,
+            "Total Medals": p_total_medals,
+            "Weighted Medals": p_weighted_medals,
+            "Total Hardware": p_total_hw,
             "Total Multiplied Medals": round(p_medals, 2),
             "Total Multiplied Hardware": round(p_hw, 2)
         })
         
     with open("output/paralympic_player_scores.csv", 'w', newline='', encoding='utf-8') as f:
         writer = csv.DictWriter(f, fieldnames=[
-            "Player", "Total Multiplied Medals", "Total Multiplied Hardware"
+            "Player", "Total Medals", "Weighted Medals", "Total Hardware", "Total Multiplied Medals", "Total Multiplied Hardware"
         ])
         writer.writeheader()
         player_scores.sort(key=lambda x: x['Total Multiplied Hardware'], reverse=True)
