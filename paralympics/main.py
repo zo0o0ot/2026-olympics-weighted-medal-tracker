@@ -30,14 +30,23 @@ COUNTRY_NAME_MAP = {
     "PR China": "China"
 }
 
+# Build a normalized lookup map for canonical country names
+NORMALIZED_COUNTRY_MAP = {}
+for raw_name, canonical in COUNTRY_NAME_MAP.items():
+    NORMALIZED_COUNTRY_MAP[raw_name.lower().strip()] = canonical.lower().strip()
+
 def normalize_country_name(name):
-    """Normalize for fuzzy matching."""
+    """Normalize for fuzzy matching and apply canonical mappings."""
     if not name: return ""
-    name = name.lower()
+    name = name.lower().strip()
     for prefix in ["the ", "republic of ", "people's republic of "]:
         if name.startswith(prefix):
             name = name[len(prefix):]
-    return name.strip()
+    name = name.strip()
+    # Apply canonical mapping if available
+    if name in NORMALIZED_COUNTRY_MAP:
+        return NORMALIZED_COUNTRY_MAP[name]
+    return name
 
 # --- Core Logic ---
 
@@ -71,6 +80,136 @@ def get_paralympic_hardware_multiplier(event_name):
         
     return 1
 
+def scrape_event_results():
+    """
+    Scrapes individual event results to calculate hardware (physical medals) properly.
+    Returns a dict mapping normalized country names to their hardware counts by medal type.
+    """
+    event_hardware = {}  # {country: {"gold_hw": X, "silver_hw": Y, "bronze_hw": Z}}
+
+    def add_hardware(country, medal_type, multiplier):
+        """Helper to add hardware to a country's tally."""
+        country = normalize_country_name(country)
+        if country not in event_hardware:
+            event_hardware[country] = {"gold_hw": 0, "silver_hw": 0, "bronze_hw": 0}
+        event_hardware[country][medal_type] += multiplier
+
+    # Known country names for validation
+    KNOWN_COUNTRIES = {
+        'australia', 'austria', 'belarus', 'belgium', 'brazil', 'canada', 'chile',
+        'china', 'croatia', 'czech republic', 'czechia', 'denmark', 'estonia',
+        'finland', 'france', 'germany', 'great britain', 'greece', 'hungary',
+        'iceland', 'ireland', 'israel', 'italy', 'japan', 'kazakhstan', 'latvia',
+        'liechtenstein', 'lithuania', 'mexico', 'mongolia', 'montenegro',
+        'netherlands', 'new zealand', 'north korea', 'north macedonia', 'norway',
+        'poland', 'portugal', 'romania', 'russia', 'serbia', 'slovakia', 'slovenia',
+        'south korea', 'spain', 'sweden', 'switzerland', 'ukraine',
+        'united kingdom', 'united states', 'usa', 'uzbekistan'
+    }
+
+    def extract_country_from_cell(cell):
+        """Extract country name from a medal cell."""
+        # Try to find a country link first
+        for a_tag in cell.find_all('a'):
+            href = a_tag.get('href', '')
+            if 'at_the' in href and 'Paralympics' in href:
+                # Match everything before "_at_the"
+                match = re.search(r'/wiki/(.+?)_at_the', href)
+                if match:
+                    country = match.group(1).replace('_', ' ')
+                    return country
+        # Fallback: get first line of text (usually country name)
+        text = cell.get_text().strip()
+        if text:
+            # Country name is usually the first word/line before player names
+            first_line = text.split('\n')[0].strip()
+            # Remove any bracketed content
+            first_line = re.sub(r'\[.*?\]', '', first_line).strip()
+            # Check if it's a known country
+            if first_line.lower() in KNOWN_COUNTRIES:
+                return first_line
+        return None
+
+    # List of sport pages to scrape for event results
+    sport_configs = [
+        ('https://en.wikipedia.org/wiki/Alpine_skiing_at_the_2026_Winter_Paralympics', 1),
+        ('https://en.wikipedia.org/wiki/Biathlon_at_the_2026_Winter_Paralympics', 1),
+        ('https://en.wikipedia.org/wiki/Cross-country_skiing_at_the_2026_Winter_Paralympics', 1),  # Relays handled specially
+        ('https://en.wikipedia.org/wiki/Para_ice_hockey_at_the_2026_Winter_Paralympics', 17),
+        ('https://en.wikipedia.org/wiki/Para_snowboard_at_the_2026_Winter_Paralympics', 1),
+        ('https://en.wikipedia.org/wiki/Wheelchair_curling_at_the_2026_Winter_Paralympics', 5),  # Team events
+    ]
+
+    for sport_url, default_multiplier in sport_configs:
+        try:
+            req = urllib.request.Request(sport_url, headers={'User-Agent': 'Mozilla/5.0'})
+            html = urllib.request.urlopen(req).read()
+            soup = BeautifulSoup(html, 'html.parser')
+
+            # Find tables with "Event | Gold | Silver | Bronze" structure
+            tables = soup.find_all('table', class_=re.compile(r'wikitable'))
+
+            for table in tables:
+                rows = table.find_all('tr')
+                if not rows:
+                    continue
+
+                # Check header row for medal columns
+                header = rows[0]
+                header_cells = [th.get_text().strip().lower() for th in header.find_all(['th', 'td'])]
+
+                # Find column indices for medals
+                gold_idx = silver_idx = bronze_idx = -1
+                for i, h in enumerate(header_cells):
+                    if 'gold' in h:
+                        gold_idx = i
+                    elif 'silver' in h:
+                        silver_idx = i
+                    elif 'bronze' in h:
+                        bronze_idx = i
+
+                if gold_idx == -1 or silver_idx == -1 or bronze_idx == -1:
+                    continue
+
+                # Process data rows
+                for row in rows[1:]:
+                    cells = row.find_all(['td', 'th'])
+                    if len(cells) <= max(gold_idx, silver_idx, bronze_idx):
+                        continue
+
+                    # Determine multiplier based on event name
+                    event_cell = cells[0].get_text().lower() if cells else ""
+                    if 'relay' in event_cell:
+                        multiplier = 4
+                    elif 'double' in event_cell:
+                        multiplier = 2  # Mixed doubles curling
+                    elif 'hockey' in sport_url.lower():
+                        multiplier = 17
+                    elif 'curling' in sport_url.lower() and 'team' in event_cell:
+                        multiplier = 5
+                    elif any(x in event_cell for x in ['visually impaired', 'b1', 'b2', 'b3', 'vi']):
+                        multiplier = 2  # Athlete + guide
+                    else:
+                        multiplier = default_multiplier
+
+                    # Extract countries from medal cells
+                    gold_country = extract_country_from_cell(cells[gold_idx]) if gold_idx < len(cells) else None
+                    silver_country = extract_country_from_cell(cells[silver_idx]) if silver_idx < len(cells) else None
+                    bronze_country = extract_country_from_cell(cells[bronze_idx]) if bronze_idx < len(cells) else None
+
+                    if gold_country:
+                        add_hardware(gold_country, "gold_hw", multiplier)
+                    if silver_country:
+                        add_hardware(silver_country, "silver_hw", multiplier)
+                    if bronze_country:
+                        add_hardware(bronze_country, "bronze_hw", multiplier)
+
+        except Exception as e:
+            print(f"Failed to fetch {sport_url}: {e}")
+            continue
+
+    return event_hardware
+
 def scrape_wikipedia_data():
     """
     Scrapes the 2026 Winter Paralympics page (or 2022 as fallback if 2026 is empty)
@@ -83,16 +222,16 @@ def scrape_wikipedia_data():
         html = urllib.request.urlopen(req).read()
     except Exception as e:
         print(f"Failed to fetch {url}: {e}")
-        return {}, []
+        return {}, [], {}
 
     soup = BeautifulSoup(html, 'html.parser')
     participants = {}
-    
+
     # Extract Participants
     span = soup.find(id='Participating_National_Paralympic_Committees')
     if not span:
         span = soup.find(id='Participating_Nations')
-        
+
     if span:
         # Find the list of countries following this span
         for node in span.parent.find_all_next(['ul', 'div']):
@@ -108,17 +247,21 @@ def scrape_wikipedia_data():
                     found_any = True
             if found_any:
                 break
-                
+
+    # Scrape event-level results for hardware calculation
+    print("Scraping event results for hardware calculation...")
+    event_hardware = scrape_event_results()
+
     # Extract Medal Table
     medals = []
-    
+
     # Fetch dedicated medal table page
     medal_url = 'https://en.wikipedia.org/wiki/2026_Winter_Paralympics_medal_table'
     medal_req = urllib.request.Request(medal_url, headers={'User-Agent': 'Mozilla/5.0'})
     try:
         medal_html = urllib.request.urlopen(medal_req).read()
         medal_soup = BeautifulSoup(medal_html, 'html.parser')
-        
+
         # Look for the main medal table by checking headers
         tables = medal_soup.find_all('table')
         target_table = None
@@ -129,7 +272,7 @@ def scrape_wikipedia_data():
                 if 'gold' in headers and ('npc' in headers or 'nation' in headers) and 'total' in headers:
                     target_table = tbl
                     break
-                    
+
         if target_table:
             for row in target_table.find_all('tr')[1:]:
                 cols = row.find_all(['td', 'th'])
@@ -142,30 +285,48 @@ def scrape_wikipedia_data():
                         if a and len(a.text.strip()) > 2 and "Paralympics" not in a.text:
                             a_tag = a
                             break
-                            
+
                     if a_tag:
                         country_raw = a_tag.text.strip()
                         country = normalize_country_name(country_raw)
-                        
+
                         try:
                             # We can just take the last 4 columns (G, S, B, Total)
                             g = int(cols[-4].text.strip() or 0)
                             s = int(cols[-3].text.strip() or 0)
                             b = int(cols[-2].text.strip() or 0)
+
+                            # Calculate hardware from event-level data if available
+                            hw_data = event_hardware.get(country, {})
+                            gold_hw = hw_data.get("gold_hw", 0)
+                            silver_hw = hw_data.get("silver_hw", 0)
+                            bronze_hw = hw_data.get("bronze_hw", 0)
+                            total_hw = gold_hw + silver_hw + bronze_hw
+
+                            # Fall back to medal count if no event data
+                            if total_hw == 0:
+                                gold_hw = g
+                                silver_hw = s
+                                bronze_hw = b
+                                total_hw = g + s + b
+
                             medals.append({
                                 "CountryRaw": country_raw,
                                 "Country": country,
                                 "Gold": g,
                                 "Silver": s,
                                 "Bronze": b,
-                                "Hardware": g + s + b # We will override this with details if available
+                                "GoldHW": gold_hw,
+                                "SilverHW": silver_hw,
+                                "BronzeHW": bronze_hw,
+                                "Hardware": total_hw
                             })
                         except (ValueError, IndexError):
                             pass
     except Exception as e:
         print(f"Failed to fetch {medal_url}: {e}")
-                            
-    return participants, medals
+
+    return participants, medals, event_hardware
 
 def load_participant_counts(filepath="data/participants.json"):
     """
@@ -205,12 +366,48 @@ def generate_reports():
     """
     # 1. Scrape live Wiki data
     print("Scraping Wikipedia for participants and medals...")
-    participants, medals = scrape_wikipedia_data()
-    
+    participants, medals, event_hardware = scrape_wikipedia_data()
+
     # Optional load from local JSON if scraping fails
     if not participants:
         print("Using local participants data fallback...")
         participants = load_participant_counts()
+
+    # Consolidate participants with same normalized names
+    consolidated_participants = {}
+    for country, count in participants.items():
+        norm = normalize_country_name(country)
+        if norm in consolidated_participants:
+            consolidated_participants[norm] += count
+        else:
+            consolidated_participants[norm] = count
+    participants = consolidated_participants
+
+    # Consolidate medals with same normalized names
+    consolidated_medals = {}
+    for m in medals:
+        norm = m['Country']
+        if norm in consolidated_medals:
+            consolidated_medals[norm]['Gold'] += m['Gold']
+            consolidated_medals[norm]['Silver'] += m['Silver']
+            consolidated_medals[norm]['Bronze'] += m['Bronze']
+            consolidated_medals[norm]['GoldHW'] += m.get('GoldHW', m['Gold'])
+            consolidated_medals[norm]['SilverHW'] += m.get('SilverHW', m['Silver'])
+            consolidated_medals[norm]['BronzeHW'] += m.get('BronzeHW', m['Bronze'])
+            consolidated_medals[norm]['Hardware'] += m['Hardware']
+        else:
+            consolidated_medals[norm] = {
+                'CountryRaw': m['CountryRaw'],
+                'Country': norm,
+                'Gold': m['Gold'],
+                'Silver': m['Silver'],
+                'Bronze': m['Bronze'],
+                'GoldHW': m.get('GoldHW', m['Gold']),
+                'SilverHW': m.get('SilverHW', m['Silver']),
+                'BronzeHW': m.get('BronzeHW', m['Bronze']),
+                'Hardware': m['Hardware']
+            }
+    medals = list(consolidated_medals.values())
         
     # 2. Build multipliers
     multipliers, max_participants = calculate_dynamic_multipliers(participants)
@@ -239,24 +436,32 @@ def generate_reports():
         mult = multipliers.get(c_norm, float(max_participants) if max_participants > 0 else 1.0)
         
         # Find medaling data
-        g = s = b = total_hw = 0
+        g = s = b = total_hw = gold_hw = silver_hw = bronze_hw = 0
         for m in medals:
             if m['Country'] == c_norm:
                 c_raw = m['CountryRaw'] # Upgrade to exact Wikipedia casing
                 g = m['Gold']
                 s = m['Silver']
                 b = m['Bronze']
+                gold_hw = m.get('GoldHW', g)
+                silver_hw = m.get('SilverHW', s)
+                bronze_hw = m.get('BronzeHW', b)
                 total_hw = m['Hardware']
                 break
-                
-        # We don't have scraped hardware details mapped yet, so Total Hardware defaults to Medal Count
+
+        # Calculate medal counts
         total_medals = g + s + b
         weighted_medals = (g * 3) + (s * 2) + (b * 1)
-        
-        # Calculate final multipliers
+
+        # Calculate hardware counts (raw = physical medals, weighted = gold*3 + silver*2 + bronze*1)
+        raw_hardware = total_hw  # gold_hw + silver_hw + bronze_hw
+        weighted_hardware = (gold_hw * 3) + (silver_hw * 2) + (bronze_hw * 1)
+
+        # Calculate multiplied values
         mult_medals = round(weighted_medals * mult, 2)
-        mult_hw = round(total_hw * mult, 2)
-        
+        mult_raw_hw = round(raw_hardware * mult, 2)
+        mult_weighted_hw = round(weighted_hardware * mult, 2)
+
         country_outputs.append({
             "Country": c_raw,
             "NormName": c_norm,
@@ -268,9 +473,11 @@ def generate_reports():
             "Bronze": b,
             "Total Medals": total_medals,
             "Weighted Medals": weighted_medals,
-            "Total Hardware": total_hw,
+            "Raw Hardware": raw_hardware,
+            "Weighted Hardware": weighted_hardware,
             "Multiplied Medals": mult_medals,
-            "Multiplied Hardware": mult_hw
+            "Multiplied Raw Hardware": mult_raw_hw,
+            "Multiplied Weighted Hardware": mult_weighted_hw
         })
 
     # 4. Export CSVs
@@ -278,14 +485,15 @@ def generate_reports():
     os.makedirs("output", exist_ok=True)
     with open("output/paralympic_country_scores.csv", 'w', newline='', encoding='utf-8') as f:
         writer = csv.DictWriter(f, fieldnames=[
-            "Country", "Participants", "Max Delegation", "Dynamic Multiplier", 
-            "Gold", "Silver", "Bronze", "Total Medals", "Weighted Medals", 
-            "Total Hardware", "Multiplied Medals", "Multiplied Hardware"
+            "Country", "Participants", "Max Delegation", "Dynamic Multiplier",
+            "Gold", "Silver", "Bronze", "Total Medals", "Weighted Medals",
+            "Raw Hardware", "Weighted Hardware",
+            "Multiplied Medals", "Multiplied Raw Hardware", "Multiplied Weighted Hardware"
         ])
         writer.writeheader()
-        
-        # Sort by Multiplied Hardware
-        country_outputs.sort(key=lambda x: x['Multiplied Hardware'], reverse=True)
+
+        # Sort by Multiplied Weighted Hardware
+        country_outputs.sort(key=lambda x: x['Multiplied Weighted Hardware'], reverse=True)
         for row in country_outputs:
             out_row = {k: v for k, v in row.items() if k != 'NormName'}
             writer.writerow(out_row)
@@ -293,37 +501,44 @@ def generate_reports():
     print("Exporting Player Scores...")
     player_scores = []
     for player, teams in DRAFTED_TEAMS.items():
-        p_medals = 0
-        p_hw = 0
-        p_total_medals  = 0
+        p_mult_medals = 0
+        p_mult_raw_hw = 0
+        p_mult_weighted_hw = 0
+        p_total_medals = 0
         p_weighted_medals = 0
-        p_total_hw = 0
+        p_raw_hw = 0
+        p_weighted_hw = 0
         for team in teams:
             c_norm = normalize_country_name(team)
             for row in country_outputs:
                 if row['NormName'] == c_norm or normalize_country_name(COUNTRY_NAME_MAP.get(row['Country'], "")) == c_norm:
-                    p_medals += row['Multiplied Medals']
-                    p_hw += row['Multiplied Hardware']
+                    p_mult_medals += row['Multiplied Medals']
+                    p_mult_raw_hw += row['Multiplied Raw Hardware']
+                    p_mult_weighted_hw += row['Multiplied Weighted Hardware']
                     p_total_medals += row['Total Medals']
                     p_weighted_medals += row['Weighted Medals']
-                    p_total_hw += row['Total Hardware']
+                    p_raw_hw += row['Raw Hardware']
+                    p_weighted_hw += row['Weighted Hardware']
                     break
-                    
+
         player_scores.append({
             "Player": player,
             "Total Medals": p_total_medals,
             "Weighted Medals": p_weighted_medals,
-            "Total Hardware": p_total_hw,
-            "Total Multiplied Medals": round(p_medals, 2),
-            "Total Multiplied Hardware": round(p_hw, 2)
+            "Raw Hardware": p_raw_hw,
+            "Weighted Hardware": p_weighted_hw,
+            "Multiplied Medals": round(p_mult_medals, 2),
+            "Multiplied Raw Hardware": round(p_mult_raw_hw, 2),
+            "Multiplied Weighted Hardware": round(p_mult_weighted_hw, 2)
         })
-        
+
     with open("output/paralympic_player_scores.csv", 'w', newline='', encoding='utf-8') as f:
         writer = csv.DictWriter(f, fieldnames=[
-            "Player", "Total Medals", "Weighted Medals", "Total Hardware", "Total Multiplied Medals", "Total Multiplied Hardware"
+            "Player", "Total Medals", "Weighted Medals", "Raw Hardware", "Weighted Hardware",
+            "Multiplied Medals", "Multiplied Raw Hardware", "Multiplied Weighted Hardware"
         ])
         writer.writeheader()
-        player_scores.sort(key=lambda x: x['Total Multiplied Hardware'], reverse=True)
+        player_scores.sort(key=lambda x: x['Multiplied Weighted Hardware'], reverse=True)
         writer.writerows(player_scores)
         
     print("Successfully exported all Paralympics CSV reports.")
