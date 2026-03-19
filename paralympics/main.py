@@ -540,7 +540,62 @@ def generate_reports():
         writer.writeheader()
         player_scores.sort(key=lambda x: x['Multiplied Weighted Hardware'], reverse=True)
         writer.writerows(player_scores)
-        
+
+    # Generate Medal Stand
+    print("Exporting Medal Stand...")
+    medal_stand_categories = [
+        ("Total Medals", "Total Medals"),
+        ("Weighted Medals", "Weighted Medals"),
+        ("Raw Hardware", "Raw Hardware"),
+        ("Weighted Hardware", "Weighted Hardware"),
+        ("Multiplied Medals", "Multiplied Medals"),
+        ("Multiplied Raw Hardware", "Multiplied Raw Hardware"),
+        ("Multiplied Weighted Hardware", "Multiplied Weighted Hardware"),
+    ]
+
+    medal_stand_rows = []
+    for category_name, score_key in medal_stand_categories:
+        # Sort players by this category
+        sorted_players = sorted(player_scores, key=lambda x: x[score_key], reverse=True)
+
+        # Assign places (handle ties)
+        places = {}
+        current_place = 1
+        prev_score = None
+        for i, player in enumerate(sorted_players):
+            score = player[score_key]
+            if prev_score is not None and score < prev_score:
+                current_place = i + 1
+            places[player['Player']] = current_place
+            prev_score = score
+
+        # Find 1st, 2nd, 3rd place winners
+        first_place = [p['Player'] for p in sorted_players if places[p['Player']] == 1]
+        second_place = [p['Player'] for p in sorted_players if places[p['Player']] == 2]
+        third_place = [p['Player'] for p in sorted_players if places[p['Player']] == 3]
+
+        # Get scores for display
+        first_score = sorted_players[0][score_key] if sorted_players else 0
+        second_score = next((p[score_key] for p in sorted_players if places[p['Player']] == 2), 0)
+        third_score = next((p[score_key] for p in sorted_players if places[p['Player']] == 3), 0)
+
+        medal_stand_rows.append({
+            "Category": category_name,
+            "Gold (1st)": ", ".join(first_place),
+            "Gold Score": first_score,
+            "Silver (2nd)": ", ".join(second_place),
+            "Silver Score": second_score,
+            "Bronze (3rd)": ", ".join(third_place),
+            "Bronze Score": third_score
+        })
+
+    with open("output/paralympic_medal_stand.csv", 'w', newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=[
+            "Category", "Gold (1st)", "Gold Score", "Silver (2nd)", "Silver Score", "Bronze (3rd)", "Bronze Score"
+        ])
+        writer.writeheader()
+        writer.writerows(medal_stand_rows)
+
     print("Successfully exported all Paralympics CSV reports.")
 
 if __name__ == '__main__':
